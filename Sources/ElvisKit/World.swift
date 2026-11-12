@@ -1,0 +1,38 @@
+public struct World: Equatable, Sendable {
+    public var x = Yard.home
+    /// +1 facing right, -1 facing left.
+    public var facing = 1.0
+    public var mud = 0.0
+    /// 1 straight after a test failure, fading back to 0.
+    public var glum = 0.0
+    public var ball: Ball?
+    public var doorOpen = false
+    /// Cursor position in yard units when it is close enough to be interesting.
+    public var cursor: (x: Double, y: Double)?
+
+    public init() {}
+
+    public static func == (a: World, b: World) -> Bool {
+        a.x == b.x && a.facing == b.facing && a.mud == b.mud && a.glum == b.glum && a.ball == b.ball
+            && a.doorOpen == b.doorOpen && a.cursor?.x == b.cursor?.x && a.cursor?.y == b.cursor?.y
+    }
+}
+
+public struct Ball: Equatable, Sendable {
+    public enum State: Equatable, Sendable { case flying, resting, carried }
+    public var x: Double
+    public var y: Double
+    public var vx: Double
+    public var vy: Double
+    public var state: State
+    public var spin = 0.0
+    public var restedFor = 0.0
+
+    public init(x: Double, y: Double, vx: Double, vy: Double, state: State) {
+        self.x = x
+        self.y = y
+        self.vx = vx
+        self.vy = vy
+        self.state = state
+    }
+}
