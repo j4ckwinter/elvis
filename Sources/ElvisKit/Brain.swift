@@ -32,7 +32,7 @@ public struct Brain: Sendable {
     }
 
     public var tuning = Tuning()
-    public private(set) var world = World()
+    public internal(set) var world = World()
     public private(set) var action = Action.sit
     public private(set) var elapsed = 0.0
     /// Changes every time a new action starts, including a repeat of the same one.
@@ -43,19 +43,19 @@ public struct Brain: Sendable {
     private var queue: [Step] = []
     private var reacting = false
     private var sessions = Sessions()
-    private var rng: SplitMix
+    var rng: SplitMix
     private var cues: [Cue] = []
 
-    private var modeSince = 0.0
-    private var settledSince = 0.0
+    private(set) var modeSince = 0.0
+    private(set) var settledSince = 0.0
     private var lastFetch = -1e9
     private var lastWhine = -1e9
     private var lastFail = -1e9
-    private var flavour: WorkEvent.Flavour?
-    private var flavourAt = -1e9
-    private var hovering = false
+    var flavour: WorkEvent.Flavour?
+    private(set) var flavourAt = -1e9
+    private(set) var hovering = false
     private var hoverTime = 0.0
-    private var pettedThisHover = false
+    private(set) var pettedThisHover = false
     private var cursorMovedAt = -1e9
 
     public init(seed: UInt64) {
@@ -390,183 +390,13 @@ public struct Brain: Sendable {
         }
     }
 
-    private mutating func chooseNext() -> [Step] {
-        if hovering, pettedThisHover, mode != .waiting || abs(world.x - Yard.doorSpot) < 2 {
-            return [Step(action.isAsleep ? .sleep : .petted, action.isAsleep ? 4 : 1.8)]
-        }
-        switch mode {
-        case .waiting: return nextWhileWaiting()
-        case .working: return nextWhileWorking()
-        case .calm: return nextWhileCalm()
-        }
-    }
-
-    private mutating func nextWhileWaiting() -> [Step] {
-        if abs(world.x - Yard.doorSpot) > 1 {
-            return [Step(.go(to: Yard.doorSpot, gait: .trot))]
-        }
-        world.facing = 1
-        // No sound here: Claude Code reports nothing at the moment of approval, so a long approved command
-        // looks the same as an unanswered prompt, and whining at someone who already answered would be wrong.
-        if now - modeSince > 150 {
-            return [Step(.lieByDoor, random(8, 14))]
-        }
-        if action != .stare { return [Step(.stare, random(3, 6))] }
-        switch Int.random(in: 0..<3, using: &rng) {
-        case 0: return [Step(.tiltHead, 1.8)]
-        case 1: return [Step(.pawDoor, 1.9)]
-        default: return [Step(.glanceDoor, 1.5)]
-        }
-    }
-
-    private mutating func nextWhileWorking() -> [Step] {
-        let gait: Gait = world.glum > 0.3 ? .slink : .sniff
-        let recent = now - flavourAt < 8 ? flavour : nil
-        flavour = nil
-        let roll = Double.random(in: 0...1, using: &rng)
-
-        if world.glum < 0.3 {
-            if roll < 0.04 { return [Step(.chaseTail, 2.2), Step(.startle, 0.5)] }
-            if roll < 0.13 { return [Step(.checkIn, 1.9)] }
-            if now - modeSince > 25 * 60, roll < 0.2 { return [Step(.pant, 4)] }
-        }
-        switch recent {
-        case .edit:
-            return [Step(.go(to: spot(within: 26), gait: gait)), Step(.dig, 2.6)]
-        case .shell:
-            if roll < 0.6 { return [Step(.point, random(2.4, 3.8))] }
-        case .web:
-            return [Step(.sniffAir, 2.4)]
-        case .read, .other, nil:
-            break
-        }
-        let trail: Gait = world.glum > 0.3 ? .slink : (roll > 0.8 ? .trot : gait)
-        return [Step(.go(to: spot(within: 90), gait: trail)), Step(.sniffSpot, random(1.4, 2.8))]
-    }
-
-    private mutating func nextWhileCalm() -> [Step] {
-        let settled = now - max(settledSince, modeSince)
-        let lying = action.isLyingDown
-
-        if world.mud > 0.5, !action.isAsleep, action != .shake, chance(0.5) {
-            return lying ? [Step(.sit, 0.8), Step(.shake, 1.7)] : [Step(.shake, 1.7)]
-        }
-        if settled < tuning.awakeFor {
-            switch Int.random(in: 0..<12, using: &rng) {
-            case 0, 1: return [Step(.sit, random(2.5, 4.5))]
-            case 2, 3: return [Step(.lookAround, random(2.5, 4))]
-            case 4: return [Step(.wagAtYou, 2.2)]
-            case 5: return [Step(.scratch, 2.3)]
-            case 6: return [Step(.sneeze, 1.0), Step(.sit, 1.2)]
-            case 7: return [Step(.chaseTail, 2.6), Step(.dizzy, 1.6)]
-            case 8:
-                if let ball = world.ball, ball.state == .resting {
-                    let side = world.x <= ball.x ? -1.0 : 1.0
-                    return [Step(.go(to: ball.x + side * 14, gait: .trot)), Step(.nudgeBall, 0.7), Step(.wagAtYou, 2.4)]
-                }
-                return [Step(.stretch, 2.2)]
-            case 9: return [Step(.go(to: spot(within: 40), gait: .walk)), Step(.sniffSpot, 1.6)]
-            default: return [Step(.sit, random(2, 3.5))]
-            }
-        }
-        if settled < tuning.restUntil {
-            if !lying { return [Step(.circle, 1.7), Step(.rest, random(5, 8))] }
-            switch Int.random(in: 0..<8, using: &rng) {
-            case 0: return [Step(.earFlap, 1.0)]
-            case 1: return [Step(.sigh, 2.0)]
-            case 2: return [Step(.yawn, 2.0)]
-            default: return [Step(.rest, random(5, 9))]
-            }
-        }
-        if settled < tuning.dozeUntil {
-            if !lying { return [Step(.circle, 1.7), Step(.doze, random(8, 12))] }
-            return [Step(.doze, random(8, 12))]
-        }
-        if !lying { return [Step(.circle, 1.7), Step(.doze, 6)] }
-        if action == .sleep {
-            switch Int.random(in: 0..<5, using: &rng) {
-            case 0: return [Step(.dream, 5.5)]
-            case 1: return [Step(.sleepSigh, 2.4)]
-            case 2: return [Step(.sleepWag, 2.2)]
-            default: return [Step(.sleepTwitch, 2.6)]
-            }
-        }
-        return [Step(.sleep, random(12, 28))]
-    }
-
-    private mutating func random(_ low: Double, _ high: Double) -> Double {
-        Double.random(in: low...high, using: &rng)
-    }
-
-    private mutating func chance(_ probability: Double) -> Bool {
+    mutating func chance(_ probability: Double) -> Bool {
         Double.random(in: 0...1, using: &rng) < probability
-    }
-
-    private mutating func spot(within reach: Double) -> Double {
-        let low = max(Yard.leftEdge, world.x - reach)
-        let high = min(Yard.rightEdge, world.x + reach)
-        guard low < high else { return min(Yard.rightEdge, max(Yard.leftEdge, world.x)) }
-        for _ in 0..<4 {
-            let candidate = random(low, high)
-            if abs(candidate - world.x) > min(12, reach / 2) { return candidate }
-        }
-        return random(low, high)
     }
 
     private func nearHome() -> Double {
         let spot = Yard.home + (world.x < Yard.home ? -6 : 6)
         guard let ball = world.ball, ball.state == .resting, abs(ball.x - spot) < 14 else { return spot }
         return ball.x + (world.x < ball.x ? -18 : 18)
-    }
-}
-
-extension Brain {
-    /// A line for the menu: what Elvis thinks he is doing.
-    public var caption: String {
-        switch action {
-        case .sleep, .sleepSigh: return "fast asleep"
-        case .sleepTwitch: return "asleep, paws going"
-        case .dream: return "dreaming about a tennis ball"
-        case .sleepWag: return "asleep, but pleased about something"
-        case .doze: return "dozing with one ear on you"
-        case .rest, .sigh, .earFlap, .yawn: return "having a lie down"
-        case .sit, .lookAround: return "keeping an eye on things"
-        case .wagAtYou, .checkIn: return "checking you still like him"
-        case .scratch: return "dealing with an itch"
-        case .sneeze: return "surprised by his own sneeze"
-        case .stretch: return "having a big stretch"
-        case .circle: return "choosing the exact right spot"
-        case .chaseTail: return "has spotted his tail again"
-        case .dizzy: return "regretting the tail thing"
-        case .shake: return "sharing the mud around"
-        case .petted: return "being a very good boy"
-        case .nudgeBall: return "wondering if you saw the ball"
-        case .go(_, let gait):
-            switch gait {
-            case .sniff: return "following a very important smell"
-            case .slink, .trudge: return "carrying on, bravely"
-            case .prance: return "bringing it back, look, look"
-            case .run: return "going as fast as he can"
-            case .walk, .trot: return world.doorOpen ? "off to the door" : "on his way somewhere"
-            }
-        case .sniffSpot: return "sure there's something right here"
-        case .dig: return "helping with the edits"
-        case .point: return "pointing at the terminal"
-        case .sniffAir: return "smelling the internet"
-        case .pant: return "catching his breath"
-        case .startle: return "awake! awake"
-        case .boundUp: return "ready, so ready"
-        case .droop: return "sorry about the tests"
-        case .spin: return "they pass, they pass"
-        case .confused: return "not sure what just happened"
-        case .watchBall, .chaseBall, .skid, .grabBall: return "ball ball ball"
-        case .dropBall, .proudSit: return "brought you this"
-        case .flop: return "done in, and delighted"
-        case .stare, .tiltHead, .pawDoor, .glanceDoor: return "waiting by the door for you"
-        case .lieByDoor: return "still waiting by the door"
-        case .relief: return "you answered"
-        case .held: return "being carried, legs going"
-        case .landed: return "back on solid ground"
-        }
     }
 }
