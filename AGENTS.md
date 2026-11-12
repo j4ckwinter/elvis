@@ -25,6 +25,8 @@ ELVIS_HOME="$(mktemp -d)" ELVIS_FILM=<directory> .build/release/elvis run
 
 `ELVIS_HOME` gives that instance its own socket, lock, and `state.json`, so it leaves Jack's running Elvis and his saved state alone. Send it events with the same `ELVIS_HOME` set. Keep the path short: a Unix socket path is limited to about 100 characters.
 
+Set `ELVIS_HEADLESS` as well to run the socket, brain, and timer with no window and no menu-bar item, which is how the app tests start him without a second dog on screen.
+
 ## Where things live
 
 Each decision has one owner. Put new code with the owner of the decision it makes.

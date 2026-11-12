@@ -5,7 +5,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var brain = Brain(seed: UInt64(Date().timeIntervalSince1970 * 1000))
     private var stage = Stage(seed: UInt64(Date().timeIntervalSince1970))
     private var keepsakes = Keepsakes.load()
-    private var window: NSPanel!
+    private var window: NSPanel?
     private let view = YardView()
     private let whine = Whine()
     private var timer: Timer?
@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let cornerItem = NSMenuItem(title: "", action: #selector(switchCorner), keyEquivalent: "")
     private let film = ProcessInfo.processInfo.environment["ELVIS_FILM"].map(Sheets.Film.init(directory:))
     private var lastFilmed = 0.0
+    private let isHeadless = ProcessInfo.processInfo.environment["ELVIS_HEADLESS"] != nil
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         if keepsakes.day == Keepsakes.today {
@@ -29,7 +30,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             keepsakes.mud = 0
         }
 
-        window = NSPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        if !isHeadless {
+            openYard()
+            buildMenu()
+        }
+        do {
+            try EventSocket.listen { [weak self] event in self?.receive(event) }
+        } catch {
+            FileHandle.standardError.write(Data("elvis: could not open \(EventSocket.path): \(error)\n".utf8))
+            exit(1)
+        }
+        schedule(rate: 30)
+    }
+
+    private func openYard() {
+        let window = NSPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false
@@ -44,19 +59,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         view.onRelease = { [weak self] in self?.release() }
         view.wantsLayer = true
         view.layer?.contentsFormat = .RGBA8Uint
+        self.window = window
         placeWindow()
         window.orderFrontRegardless()
         NotificationCenter.default.addObserver(
             self, selector: #selector(placeWindow), name: NSApplication.didChangeScreenParametersNotification, object: nil)
-
-        buildMenu()
-        do {
-            try EventSocket.listen { [weak self] event in self?.receive(event) }
-        } catch {
-            FileHandle.standardError.write(Data("elvis: could not open \(EventSocket.path): \(error)\n".utf8))
-            exit(1)
-        }
-        schedule(rate: 30)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -66,7 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func placeWindow() {
-        guard let home = NSScreen.screens.first else { return }
+        guard let window, let home = NSScreen.screens.first else { return }
         let size = NSSize(width: Yard.width * YardView.unit, height: (Yard.height + Painter.groundMargin) * YardView.unit)
         if let spot = keepsakes.spot {
             let wanted = NSRect(origin: NSPoint(x: spot.x, y: spot.y), size: size)
@@ -99,6 +106,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func drag() {
+        guard let window else { return }
         let mouse = NSEvent.mouseLocation
         if grip == nil, let start = pressedAt, hypot(mouse.x - start.x, mouse.y - start.y) > 3 {
             grip = NSPoint(x: start.x - window.frame.minX, y: start.y - window.frame.minY)
@@ -122,6 +130,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func putDown() {
         grip = nil
+        guard let window else { return }
         let mouse = NSEvent.mouseLocation
         let screen = NSScreen.screens.first { $0.frame.contains(mouse) } ?? window.screen ?? NSScreen.screens.first
         guard let screen else { return }
@@ -133,8 +142,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func cursorInYard() -> (x: Double, y: Double)? {
+        guard let frame = window?.frame else { return nil }
         let mouse = NSEvent.mouseLocation
-        let frame = window.frame
         let x = (mouse.x - frame.minX) / YardView.unit
         let y = (mouse.y - frame.minY) / YardView.unit - Painter.groundMargin
         guard x > -50, x < Yard.width + 50, y > -12, y < Yard.height + 60 else { return nil }
@@ -164,8 +173,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let buttonCameUpUnseen = pressedAt != nil && NSEvent.pressedMouseButtons & 1 == 0
         if buttonCameUpUnseen { release() }
         let catchClicks = pressedAt != nil || pointerIsOverElvis()
-        if window.ignoresMouseEvents == catchClicks { window.ignoresMouseEvents = !catchClicks }
-        let yardOrigin = CGPoint(x: window.frame.minX / YardView.unit, y: window.frame.minY / YardView.unit)
+        if let window, window.ignoresMouseEvents == catchClicks { window.ignoresMouseEvents = !catchClicks }
+        let corner = window?.frame.origin ?? .zero
+        let yardOrigin = CGPoint(x: corner.x / YardView.unit, y: corner.y / YardView.unit)
         view.show(stage.advance(brain.moment, dt: dt, yardOrigin: yardOrigin))
         if let film, now - lastFilmed >= 0.75 {
             lastFilmed = now
