@@ -2,7 +2,7 @@
 
 Elvis is a small black sprocker who lives in the corner of your Mac's screen and reacts to what Claude Code is doing. He is eager, wants you to be pleased with him, and is not very bright.
 
-He draws in a transparent strip above the Dock. Clicks pass straight through him, and he never takes focus.
+He draws in a transparent strip above the Dock and never takes focus. Clicks pass straight through the strip everywhere except on Elvis himself.
 
 ## Get him running
 
@@ -16,7 +16,9 @@ plugin/bin/elvis demo     # walks through his reactions, about 70 seconds
 
 `make install` also copies the binary to `~/.local/bin/elvis`.
 
-The paw print in the menu bar says what he thinks he is doing, throws a ball, turns sounds off, moves him to the other corner, and quits.
+Press on Elvis and drag to pick him up, carry him anywhere on any display, and let go to put him down. He lives there until you move him again. A click without a drag is a pat. **Back to His Corner** in the menu sends him home.
+
+The paw print in the menu bar says what he thinks he is doing, throws a ball, turns sounds off, moves him between corners, and quits.
 
 ## Connect him to Claude Code
 
@@ -70,7 +72,7 @@ It reports each finished command's exit status to Elvis, who ignores everything 
 
 The hook reads Claude Code's payload, reduces it to an event name, the session id, a broad tool category, and a hash that pairs a permission request with its tool call, and writes that to a Unix socket in `~/Library/Application Support/Elvis/`. Prompts, commands, file paths, and tool output go no further than the hook process. The hooks are asynchronous, print nothing, and always exit 0.
 
-`state.json` in the same directory holds the day's mud and the two menu settings.
+`state.json` in the same directory holds the day's mud, the two menu settings, and where you last put him down.
 
 ## Working on him
 
@@ -87,7 +89,9 @@ ELVIS_FILM=/some/dir .build/release/elvis run   # saves contact sheets of the li
 ## Known limits
 
 - In a full-screen Space he stays where the top of the Dock would be, so he may appear to float. Not checked.
-- He lives on the primary display only.
+- He starts on the primary display. Dragging him is the only way to move him to another one.
+- While he is resting the app checks the pointer ten times a second, so a very fast click on him can pass through to the window underneath.
+- Carrying him has been tested in the logic only, not with a real pointer. With "Displays have separate Spaces" on, he may disappear briefly while he straddles two displays.
 - The permission-prompt behaviour follows the documented hook events. It has been exercised with simulated events, not with a live permission prompt.
 - Claude Code reports nothing at the moment you approve a command, so he stays by the door until that command finishes. This is also why he never whines there.
 - A command such as `cd missing && npm test` that fails before the runner starts is read as a test failure.

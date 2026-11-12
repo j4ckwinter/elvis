@@ -216,6 +216,65 @@ import Testing
         }
     }
 
+    @Test func staysHeldWhateverClaudeDoesUntilPutDown() {
+        var brain = working()
+        brain.pickUp()
+        brain.handle(WorkEvent(.testsPassed, session: "s"))
+        brain.handle(WorkEvent(.needsYou, session: "s"))
+        run(&brain, for: 60)
+        #expect(brain.action == .held)
+        #expect(brain.world.ball == nil, "nobody throws a ball for a dog who is being carried")
+        #expect(brain.mode == .waiting)
+        #expect(brain.world.doorOpen)
+
+        brain.putDown(at: 60)
+        #expect(brain.action == .landed)
+        #expect(brain.world.x == 60)
+        run(&brain, for: 15)
+        #expect(brain.world.x == Yard.doorSpot, "once down, he goes to the door that opened while he was held")
+    }
+
+    @Test func stillHearsHowTheTestsWentWhileHeld() {
+        var brain = working()
+        brain.pickUp()
+        brain.handle(WorkEvent(.testsFailed, session: "s"))
+        #expect(brain.world.glum == 1)
+        brain.handle(WorkEvent(.testsPassed, session: "s"))
+        #expect(brain.world.glum == 0)
+        #expect(brain.action == .held)
+    }
+
+    @Test func aClickIsAPatUnlessHeIsBusy() {
+        var calm = Brain(seed: 2)
+        run(&calm, for: 4)
+        calm.pat()
+        #expect(calm.action == .petted)
+
+        var fetching = working()
+        fetching.handle(WorkEvent(.testsPassed, session: "s"))
+        let before = fetching.action
+        fetching.pat()
+        #expect(fetching.action == before)
+    }
+
+    @Test func isPutDownInsideTheYardHoweverFarHeWasCarried() {
+        var brain = Brain(seed: 4)
+        brain.pickUp()
+        brain.putDown(at: 9000)
+        #expect(brain.world.x == Yard.rightEdge)
+        brain.putDown(at: 10)
+        #expect(brain.world.x == Yard.rightEdge, "putting down a dog who is not held does nothing")
+    }
+
+    @Test func dropsTheBallWhenPickedUpMidFetch() throws {
+        var brain = working()
+        brain.handle(WorkEvent(.testsPassed, session: "s"))
+        for _ in 0..<400 where brain.world.ball?.state != .carried { brain.tick(1.0 / 30) }
+        #expect(brain.world.ball?.state == .carried)
+        brain.pickUp()
+        #expect(brain.world.ball?.state == .resting)
+    }
+
     @Test func staysInsideTheYard() {
         for seed in 0..<6 as Range<UInt64> {
             var brain = working(seed: seed)

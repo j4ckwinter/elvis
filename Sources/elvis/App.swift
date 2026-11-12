@@ -7,6 +7,13 @@ struct Keepsakes: Codable {
     var leftCorner = false
     var mud = 0.0
     var day = ""
+    /// Where the yard was left after Elvis was last carried somewhere, in screen points. Nil means his corner.
+    var spot: Spot?
+
+    struct Spot: Codable {
+        var x: Double
+        var y: Double
+    }
 
     static var path: String { EventSocket.directory + "/state.json" }
 
@@ -34,7 +41,16 @@ final class YardView: NSView {
     var frameToDraw = Frame()
     private var lastPatch = CGRect.null
 
+    var onPress: () -> Void = {}
+    var onDrag: () -> Void = {}
+    var onRelease: () -> Void = {}
+
     override var isOpaque: Bool { false }
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override func mouseDown(with event: NSEvent) { onPress() }
+    override func mouseDragged(with event: NSEvent) { onDrag() }
+    override func mouseUp(with event: NSEvent) { onRelease() }
 
     /// Repaints only the patch the new frame and the previous one touch.
     func show(_ frame: Frame) {
@@ -65,9 +81,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var lastTick = ProcessInfo.processInfo.systemUptime
     private var lastSave = ProcessInfo.processInfo.systemUptime
     private var ticksPerSecond = 30.0
+    /// Where the button went down on him, until it comes up again.
+    private var pressedAt: NSPoint?
+    /// The pointer's offset from the window's origin while Elvis is being carried.
+    private var grip: NSPoint?
     private var statusItem: NSStatusItem!
     private let captionItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let soundsItem = NSMenuItem(title: "Sounds", action: #selector(toggleSounds), keyEquivalent: "")
+    private let cornerItem = NSMenuItem(title: "", action: #selector(switchCorner), keyEquivalent: "")
     private let film = ProcessInfo.processInfo.environment["ELVIS_FILM"].map(Sheets.Film.init(directory:))
     private var lastFilmed = 0.0
 
@@ -89,6 +110,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         window.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
         window.colorSpace = .sRGB
         window.contentView = view
+        view.onPress = { [weak self] in self?.press() }
+        view.onDrag = { [weak self] in self?.drag() }
+        view.onRelease = { [weak self] in self?.release() }
         view.wantsLayer = true
         view.layer?.contentsFormat = .RGBA8Uint
         placeWindow()
@@ -113,12 +137,72 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func placeWindow() {
-        guard let screen = NSScreen.screens.first else { return }
-        let visible = screen.visibleFrame
+        guard let home = NSScreen.screens.first else { return }
         let size = NSSize(width: Yard.width * YardView.unit, height: (Yard.height + Painter.groundMargin) * YardView.unit)
-        let x = keepsakes.leftCorner ? visible.minX + 8 : visible.maxX - size.width - 8
-        let y = max(screen.frame.minY, visible.minY - 4)
-        window.setFrame(NSRect(origin: NSPoint(x: x, y: y), size: size), display: true)
+        if let spot = keepsakes.spot {
+            let wanted = NSRect(origin: NSPoint(x: spot.x, y: spot.y), size: size)
+            if let screen = NSScreen.screens.first(where: { $0.frame.intersects(wanted) }) {
+                let settled = Placement.settle(window: wanted, dogX: brain.world.x, unit: YardView.unit, within: floor(of: screen))
+                window.setFrame(NSRect(origin: settled.origin, size: size), display: true)
+                return
+            }
+        }
+        let ground = floor(of: home)
+        let x = keepsakes.leftCorner ? ground.minX + 8 : ground.maxX - size.width - 8
+        window.setFrame(NSRect(origin: NSPoint(x: x, y: ground.minY), size: size), display: true)
+    }
+
+    /// The part of a screen the yard may occupy: clear of the menu bar, with its ground line just above the Dock.
+    private func floor(of screen: NSScreen) -> NSRect {
+        let visible = screen.visibleFrame
+        let bottom = max(screen.frame.minY, visible.minY - 4)
+        return NSRect(x: visible.minX, y: bottom, width: visible.width, height: visible.maxY - bottom)
+    }
+
+    private func pointerIsOverElvis() -> Bool {
+        guard let pointer = cursorInYard() else { return false }
+        return Painter.body(of: view.frameToDraw).contains(CGPoint(x: pointer.x, y: pointer.y))
+    }
+
+    /// The window starts catching clicks a tick after the pointer reaches him, so the press is checked again here.
+    private func press() {
+        guard pointerIsOverElvis() else { return }
+        pressedAt = NSEvent.mouseLocation
+    }
+
+    /// A press only becomes a lift once the pointer moves, so that a plain click stays a pat.
+    private func drag() {
+        let mouse = NSEvent.mouseLocation
+        if grip == nil, let start = pressedAt, hypot(mouse.x - start.x, mouse.y - start.y) > 3 {
+            grip = NSPoint(x: start.x - window.frame.minX, y: start.y - window.frame.minY)
+            brain.pickUp()
+            if ticksPerSecond < 30 { schedule(rate: 30) }
+        }
+        guard let grip else { return }
+        window.setFrameOrigin(NSPoint(x: mouse.x - grip.x, y: mouse.y - grip.y))
+    }
+
+    private func release() {
+        guard pressedAt != nil else { return }
+        pressedAt = nil
+        if grip == nil {
+            brain.pat()
+            if ticksPerSecond < 30 { schedule(rate: 30) }
+        } else {
+            putDown()
+        }
+    }
+
+    private func putDown() {
+        grip = nil
+        let mouse = NSEvent.mouseLocation
+        let screen = NSScreen.screens.first { $0.frame.contains(mouse) } ?? window.screen ?? NSScreen.screens.first
+        guard let screen else { return }
+        let settled = Placement.settle(window: window.frame, dogX: brain.world.x, unit: YardView.unit, within: floor(of: screen))
+        window.setFrameOrigin(settled.origin)
+        brain.putDown(at: settled.dogX)
+        keepsakes.spot = Keepsakes.Spot(x: settled.origin.x, y: settled.origin.y)
+        keepsakes.save()
     }
 
     private func cursorInYard() -> (x: Double, y: Double)? {
@@ -150,7 +234,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             stage.showWhine(at: brain.moment)
             if keepsakes.sounds { whine.play() }
         }
-        view.show(stage.advance(brain.moment, dt: dt))
+        // macOS can swallow the button coming up, for instance when the screen locks mid-carry.
+        if pressedAt != nil, NSEvent.pressedMouseButtons & 1 == 0 { release() }
+        let catchClicks = pressedAt != nil || pointerIsOverElvis()
+        if window.ignoresMouseEvents == catchClicks { window.ignoresMouseEvents = !catchClicks }
+        let yardOrigin = CGPoint(x: window.frame.minX / YardView.unit, y: window.frame.minY / YardView.unit)
+        view.show(stage.advance(brain.moment, dt: dt, yardOrigin: yardOrigin))
         if let film, now - lastFilmed >= 0.75 {
             lastFilmed = now
             film.add(view.frameToDraw)
@@ -200,7 +289,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(withTitle: "Throw the Ball", action: #selector(throwBall), keyEquivalent: "").target = self
         soundsItem.target = self
         menu.addItem(soundsItem)
-        menu.addItem(withTitle: "Move to the Other Corner", action: #selector(switchCorner), keyEquivalent: "").target = self
+        cornerItem.target = self
+        menu.addItem(cornerItem)
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Elvis", action: #selector(quit), keyEquivalent: "").target = self
         statusItem.menu = menu
@@ -209,6 +299,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func menuWillOpen(_ menu: NSMenu) {
         captionItem.title = "Elvis: \(brain.caption)"
         soundsItem.state = keepsakes.sounds ? .on : .off
+        cornerItem.title = keepsakes.spot == nil ? "Move to the Other Corner" : "Back to His Corner"
     }
 
     @objc private func throwBall() { receive(WorkEvent(.throwBall)) }
@@ -219,7 +310,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func switchCorner() {
-        keepsakes.leftCorner.toggle()
+        if keepsakes.spot == nil { keepsakes.leftCorner.toggle() }
+        keepsakes.spot = nil
         keepsakes.save()
         placeWindow()
     }

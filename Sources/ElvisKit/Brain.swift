@@ -152,6 +152,15 @@ public struct Brain: Sendable {
 
         refreshMode()
         let after = mode
+        let failedAgain = event.kind == .testsFailed && now - lastFail < 60
+        let redToGreen = event.kind == .testsPassed && world.glum > 0.25
+        if event.kind == .testsFailed {
+            lastFail = now
+            world.glum = 1
+        } else if event.kind == .testsPassed {
+            world.glum = 0
+        }
+        if action == .held { return }
 
         if after == .waiting, before != .waiting {
             world.doorOpen = true
@@ -165,15 +174,10 @@ public struct Brain: Sendable {
 
         switch event.kind {
         case .testsFailed:
-            let again = now - lastFail < 60
-            lastFail = now
-            world.glum = 1
-            if !again { whine() }
+            if !failedAgain { whine() }
             if after == .waiting { return }
-            react([Step(.droop, again ? 2.2 : 4.4)])
+            react([Step(.droop, failedAgain ? 2.2 : 4.4)])
         case .testsPassed:
-            let redToGreen = world.glum > 0.25
-            world.glum = 0
             if after == .waiting { return }
             if isFetching { return }
             if now - lastFetch >= tuning.fetchEvery {
@@ -253,6 +257,31 @@ public struct Brain: Sendable {
         }
     }
 
+    /// A click on him: a quick fuss, unless he is in the middle of something.
+    public mutating func pat() {
+        guard !reacting, !isMoving else { return }
+        queue = []
+        start(Step(action.isAsleep ? .sleepWag : .petted, 1.8))
+    }
+
+    /// Lifts him off the ground. He stays held, whatever Claude does, until `putDown`.
+    public mutating func pickUp() {
+        guard action != .held else { return }
+        dropBallIfCarried()
+        queue = []
+        reacting = true
+        start(Step(.held, .greatestFiniteMagnitude))
+    }
+
+    public mutating func putDown(at x: Double) {
+        guard action == .held else { return }
+        world.x = min(Yard.rightEdge, max(Yard.leftEdge, x))
+        settledSince = now
+        queue = chance(0.6) ? [Step(.landed, 0.6), Step(.shake, 1.4)] : [Step(.landed, 0.6)]
+        reacting = true
+        start(queue.removeFirst())
+    }
+
     public mutating func drainCues() -> [Cue] {
         defer { cues = [] }
         return cues
@@ -287,7 +316,7 @@ public struct Brain: Sendable {
         mode = next
         modeSince = now
         if next == .calm { settledSince = now }
-        if next != .waiting { world.doorOpen = false }
+        world.doorOpen = next == .waiting
     }
 
     private mutating func expireStaleSessions() {
@@ -643,6 +672,8 @@ extension Brain {
         case .stare, .tiltHead, .pawDoor, .glanceDoor: return "waiting by the door for you"
         case .lieByDoor: return "still waiting by the door"
         case .relief: return "you answered"
+        case .held: return "being carried, legs going"
+        case .landed: return "back on solid ground"
         }
     }
 }

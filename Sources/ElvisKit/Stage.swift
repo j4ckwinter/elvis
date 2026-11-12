@@ -47,6 +47,7 @@ public struct Stage: Sendable {
     private var shown = Pose()
     private var facing = 1.0
     private var ear = Pendulum()
+    private var dangle = Pendulum()
     private var headAt: CGPoint?
     private var headVelocity = CGPoint.zero
     private var headAcceleration = CGPoint.zero
@@ -66,7 +67,9 @@ public struct Stage: Sendable {
         rng = SplitMix(seed: seed)
     }
 
-    public mutating func advance(_ m: Moment, dt: Double) -> Frame {
+    /// - Parameter yardOrigin: where the yard itself sits, in dog units. Moving it swings his ears and, while he is
+    ///   being carried, the rest of him.
+    public mutating func advance(_ m: Moment, dt: Double, yardOrigin: CGPoint = .zero) -> Frame {
         time += dt
         let started = m.serial != serial
         if started {
@@ -79,7 +82,6 @@ public struct Stage: Sendable {
 
         var pose = Choreography.pose(for: m)
         pose = blendFrom.mixed(with: pose, ease(blendAge / Stage.blendTime))
-        shown = pose
 
         let turnRate = 9.0 * dt
         facing += min(turnRate, max(-turnRate, m.world.facing - facing))
@@ -87,11 +89,18 @@ public struct Stage: Sendable {
         let side = scale >= 0 ? 1.0 : -1.0
         let drawScale = abs(scale) < 0.06 ? 0.06 * side : scale
 
+        let head = CGPoint(x: yardOrigin.x + m.world.x + drawScale * pose.head.x, y: yardOrigin.y + pose.head.y + pose.lift)
+        let push = headMotion(to: head, dt: dt)
+        Stage.swing(&ear, push: push, length: Stage.earLength, damping: 5.5, limit: 2.2, dt: dt)
+        if m.action == .held {
+            Stage.swing(&dangle, push: push, length: 26, damping: 3, limit: 1.0, dt: dt)
+            hang(&pose, at: dangle.angle * side)
+        } else {
+            dangle = Pendulum()
+        }
+        shown = pose
         watchCursor(&pose, m, side: side)
         blink(&pose, dt)
-
-        let head = CGPoint(x: m.world.x + drawScale * pose.head.x, y: pose.head.y + pose.lift)
-        swingEars(head: head, dt: dt)
         let swing = ear.angle * side
         let fling = pose.earFling
         let ears = [swing + fling, swing + fling * 0.8]
@@ -151,8 +160,9 @@ public struct Stage: Sendable {
         if pose.front < 0.5 { pose.pitch += max(-0.2, min(0.3, dy / 120)) }
     }
 
-    private mutating func swingEars(head: CGPoint, dt: Double) {
-        guard dt > 0 else { return }
+    /// Returns the sideways and upward push the head's movement puts on anything hanging from him.
+    private mutating func headMotion(to head: CGPoint, dt: Double) -> CGPoint {
+        guard dt > 0 else { return .zero }
         if let last = headAt {
             let velocity = (head - last) * (1 / dt)
             let acceleration = (velocity - headVelocity) * (1 / dt)
@@ -160,19 +170,30 @@ public struct Stage: Sendable {
             headAcceleration = headAcceleration.mixed(acceleration, 0.5)
         }
         headAt = head
-        let ax = max(-2600, min(2600, headAcceleration.x + headVelocity.x * 6))
-        let ay = max(-650, min(2600, headAcceleration.y))
+        return CGPoint(
+            x: max(-2600, min(2600, headAcceleration.x + headVelocity.x * 6)),
+            y: max(-650, min(2600, headAcceleration.y)))
+    }
+
+    private static func swing(_ pendulum: inout Pendulum, push: CGPoint, length: Double, damping: Double, limit: Double, dt: Double) {
+        guard dt > 0 else { return }
         let steps = 3
         let h = dt / Double(steps)
         for _ in 0..<steps {
-            let pull = ((Stage.earGravity + ay) * sin(ear.angle) + ax * cos(ear.angle)) / Stage.earLength
-            ear.velocity += (-pull - 5.5 * ear.velocity) * h
-            ear.angle += ear.velocity * h
+            let pull = ((earGravity + push.y) * sin(pendulum.angle) + push.x * cos(pendulum.angle)) / length
+            pendulum.velocity += (-pull - damping * pendulum.velocity) * h
+            pendulum.angle += pendulum.velocity * h
         }
-        if abs(ear.angle) > 2.2 {
-            ear.angle = ear.angle > 0 ? 2.2 : -2.2
-            ear.velocity = 0
+        if abs(pendulum.angle) > limit {
+            pendulum.angle = pendulum.angle > 0 ? limit : -limit
+            pendulum.velocity = 0
         }
+    }
+
+    /// Swings everything below the scruff, which is where he is held.
+    private func hang(_ pose: inout Pose, at angle: Double) {
+        pose.hip = pose.shoulder + (pose.hip - pose.shoulder).rotated(angle)
+        pose.paws = pose.paws.map { pose.shoulder + ($0 - pose.shoulder).rotated(angle) }
     }
 
     private func mouthPoint(_ pose: Pose, x: Double, scale: Double) -> CGPoint {
@@ -238,6 +259,12 @@ public struct Stage: Sendable {
             let count = owed(.puff, perSecond: 22, dt)
             for _ in 0..<count {
                 particles.append(Particle(kind: .puff, x: x + scale * 12, y: 1, vx: side * Double.random(in: 4...16, using: &rng), vy: Double.random(in: 2...10, using: &rng), life: 0.6, size: 1.5))
+            }
+        case .landed:
+            if crossed(0.16) {
+                for direction in [-1.0, 1.0] {
+                    particles.append(Particle(kind: .puff, x: x + direction * 9, y: 1.5, vx: direction * 10, vy: 3, life: 0.6, size: 1.4))
+                }
             }
         case .flop:
             if crossed(0.5) {

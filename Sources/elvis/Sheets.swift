@@ -69,6 +69,9 @@ enum Sheets {
             Cell(label: "sneeze", action: .sneeze, at: 0.5, length: 1.0),
             Cell(label: "sigh", action: .sigh, at: 1.0, length: 2.0),
             Cell(label: "chaseTail", action: .chaseTail, at: 0.48, length: 2.2),
+            Cell(label: "held", action: .held, at: 0.1, length: 60),
+            Cell(label: "held, settled", action: .held, at: 2.0, length: 60),
+            Cell(label: "landed", action: .landed, at: 0.3, length: 0.6),
         ]
         for (name, background) in [("dark", 0x1E1F26 as UInt32), ("light", 0xF2F0EA as UInt32)] {
             try render(postures, columns: 6, background: background, to: "\(directory)/poses-\(name).png")

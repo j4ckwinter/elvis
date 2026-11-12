@@ -34,6 +34,10 @@ public enum Painter {
     /// lies inside it, so a caller can repaint only this patch.
     public static func bounds(of frame: Frame) -> CGRect {
         var area = CGRect(x: frame.x - 40, y: -groundMargin, width: 80, height: groundMargin + 52 + max(0, frame.pose.lift))
+        if frame.action == .held {
+            area = area.insetBy(dx: -14, dy: 0)
+            area.size.height += 20
+        }
         if let ball = frame.ball, ball.state != .carried {
             area = area.union(CGRect(x: ball.x - 4.5, y: ball.y - 1.5, width: 9, height: 9))
         }
@@ -48,6 +52,17 @@ public enum Painter {
             area = area.union(CGRect(x: particle.x - reach, y: particle.y - reach, width: reach * 2, height: reach * 2))
         }
         return area
+    }
+
+    /// The box around Elvis himself in this frame, in dog units, for telling whether the pointer is on him.
+    public static func body(of frame: Frame) -> CGRect {
+        let pose = frame.pose
+        let xs = pose.paws.map(\.x) + [pose.hip.x - 7, pose.shoulder.x + 7, pose.head.x - 8, pose.head.x + 8]
+        let reach = abs(frame.facing)
+        let low = (xs.min() ?? -12) * reach, high = (xs.max() ?? 12) * reach
+        let left = frame.facing >= 0 ? frame.x + low : frame.x - high
+        let top = max(pose.head.y + 8, pose.shoulder.y + 7, pose.hip.y + 7) + pose.lift
+        return CGRect(x: left, y: -1, width: high - low, height: top + 1)
     }
 
     static func rgb(_ hex: UInt32, _ alpha: Double = 1) -> CGColor {
@@ -80,6 +95,7 @@ public enum Painter {
     }
 
     private static func drawShadow(_ ctx: CGContext, _ frame: Frame) {
+        if frame.action == .held { return }
         let pose = frame.pose
         let xs = pose.paws.map(\.x) + [pose.hip.x - 6, pose.shoulder.x + 6]
         let low = (xs.min() ?? -12) * abs(frame.facing), high = (xs.max() ?? 12) * abs(frame.facing)

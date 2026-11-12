@@ -39,6 +39,7 @@ public enum Action: Equatable, Sendable {
     case watchBall, chaseBall, skid, grabBall, dropBall, proudSit
     case flop
     case stare, tiltHead, pawDoor, glanceDoor, lieByDoor, relief
+    case held, landed
 
     public var isAsleep: Bool {
         switch self {
