@@ -34,6 +34,7 @@ Each decision has one owner. Put new code with the owner of the decision it make
 | Decision | Owner |
 | --- | --- |
 | What a Claude Code hook payload means | `ClaudeHooks.swift` |
+| How a shell command line splits into commands, and whose exit status it reports | `ShellLine.swift` |
 | Whether a command was a test run, and how it went | `TestRuns.swift` |
 | What Claude Code's sessions are doing | `Sessions.swift` |
 | How Elvis reacts to an event, and the order he does things in | `Brain.swift` |
