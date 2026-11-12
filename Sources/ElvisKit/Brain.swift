@@ -412,26 +412,7 @@ public struct Brain: Sendable {
                 return
             }
         case .flying:
-            ball.vy -= Yard.gravity * dt
-            ball.x += ball.vx * dt
-            ball.y += ball.vy * dt
-            ball.spin += ball.vx * dt / 3
-            if ball.x < 5 || ball.x > Yard.width - 5 {
-                ball.x = min(Yard.width - 5, max(5, ball.x))
-                ball.vx *= -0.5
-            }
-            if ball.y <= 0 {
-                ball.y = 0
-                if abs(ball.vy) < 26 {
-                    ball.state = .resting
-                    ball.vx = 0
-                    ball.vy = 0
-                    ball.restedFor = 0
-                } else {
-                    ball.vy *= -0.48
-                    ball.vx *= 0.6
-                }
-            }
+            ball.fly(dt)
         }
         world.ball = ball
     }

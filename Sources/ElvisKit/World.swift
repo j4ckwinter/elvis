@@ -35,4 +35,28 @@ public struct Ball: Equatable, Sendable {
         self.vy = vy
         self.state = state
     }
+
+    /// One step of flight: it falls, bounces off the ground and the ends of the yard, and rests once it is slow.
+    mutating func fly(_ dt: Double) {
+        vy -= Yard.gravity * dt
+        x += vx * dt
+        y += vy * dt
+        spin += vx * dt / 3
+        if x < 5 || x > Yard.width - 5 {
+            x = min(Yard.width - 5, max(5, x))
+            vx *= -0.5
+        }
+        if y <= 0 {
+            y = 0
+            if abs(vy) < 26 {
+                state = .resting
+                vx = 0
+                vy = 0
+                restedFor = 0
+            } else {
+                vy *= -0.48
+                vx *= 0.6
+            }
+        }
+    }
 }
