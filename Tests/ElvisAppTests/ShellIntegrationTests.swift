@@ -48,6 +48,12 @@ import Testing
         #expect(listener.linesDelivered().isEmpty)
     }
 
+    @Test func aHelperReportedByHandIsOneHeCanCount() throws {
+        let listener = try UnixSocket.Listener(at: elvis.socket)
+        try elvis.run("tell", "helper-started")
+        #expect(try Delivery(only: listener.linesDelivered()).fields == ["kind": "helper-started", "session": "by-hand", "agent": "by-hand"])
+    }
+
     @Test func tellingHimWhenHeIsNotRunningFailsAndSaysSo() throws {
         let tell = try elvis.run("tell", "tests-passed")
         #expect(tell.status != 0)

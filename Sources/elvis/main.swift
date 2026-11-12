@@ -60,6 +60,7 @@ case "restart":
         usleep(50_000)
         patience -= 1
     }
+    if EventSocket.isSomeoneListening { fail("the running Elvis did not quit") }
     let theOldOneMayStillHoldTheLock = !wake()
     if theOldOneMayStillHoldTheLock, !wake() { fail("could not start") }
 
@@ -78,6 +79,7 @@ case "tell":
     if arguments.count > 2 { event.flavour = WorkEvent.Flavour(rawValue: arguments[2]) }
     let needsNoSession: Set<WorkEvent.Kind> = [.testsPassed, .testsFailed, .committed, .pushed, .throwBall]
     if needsNoSession.contains(kind) { event.session = "" }
+    if kind == .helperStarted || kind == .helperFinished { event.agent = "by-hand" }
     if !EventSocket.send(event) { fail("Elvis isn't running. Try: elvis start") }
 
 case "ran":

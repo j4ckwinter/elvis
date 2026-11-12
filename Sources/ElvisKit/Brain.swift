@@ -398,11 +398,8 @@ public struct Brain: Sendable {
     }
 
     private static func cue(startedBy action: Action) -> Cue? {
-        switch action {
-        case .bark: return .bark
-        case .spin: return .yip
-        default: return nil
-        }
+        if action == .bark { return .bark }
+        return action == .spin ? .yip : nil
     }
 
     mutating func chance(_ probability: Double) -> Bool {

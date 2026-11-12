@@ -88,7 +88,7 @@ It reports each finished command's exit status to Elvis, who ignores everything 
 
 ## What leaves the hook
 
-The hook reads Claude Code's payload, reduces it to an event name, the session id, a broad tool category, and a hash that pairs a permission request with its tool call, and writes that to a Unix socket in `~/Library/Application Support/Elvis/`. Prompts, commands, file paths, and tool output go no further than the hook process. The hooks are asynchronous, print nothing, and always exit 0.
+The hook reads Claude Code's payload, reduces it to an event name, the session id, a broad tool category, the id Claude Code gave a subagent, and a hash that pairs a permission request with its tool call, and writes that to a Unix socket in `~/Library/Application Support/Elvis/`. Prompts, commands, file paths, and tool output go no further than the hook process. The hooks are asynchronous, print nothing, and always exit 0.
 
 `state.json` in the same directory holds the day's mud, the two menu settings, and where you last put him down.
 
