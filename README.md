@@ -77,7 +77,7 @@ The hook reads Claude Code's payload, reduces it to an event name, the session i
 ## Working on him
 
 ```sh
-make test       # logic, hook translation, test-run detection, and a drawing smoke test
+make test       # logic, hook translation, test-run detection, a drawing smoke test, and the built binary
 make sheets     # renders every pose to sheets/poses-dark.png and sheets/poses-light.png
 ELVIS_FILM=/some/dir .build/release/elvis run   # saves contact sheets of the live animation
 ```
@@ -85,6 +85,7 @@ ELVIS_FILM=/some/dir .build/release/elvis run   # saves contact sheets of the li
 - `Sources/ElvisKit/Brain.swift` decides what he does. It takes a seed and has no clock of its own, so behaviour is reproducible in tests. Timings live in `Brain.Tuning`.
 - `Choreography.swift` turns an action into a pose, `Stage.swift` adds ear physics, blinking, and particles, and `Dog.swift` draws him. Coat colours are in `Painter.Coat`.
 - `ClaudeHooks.swift` maps hook payloads to events, and `TestRuns.swift` decides whether a command was a test run and how it went.
+- `Tests/ElvisAppTests` runs the built `elvis` binary: the hook, the command line, the socket, and starting and quitting the app. Each test gets a temporary `ELVIS_HOME`, and `ELVIS_HEADLESS` keeps the app it starts off the screen.
 
 ## Known limits
 

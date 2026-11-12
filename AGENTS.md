@@ -104,11 +104,12 @@ The hook path is `ClaudeHooks.swift`, `WorkEvent.swift`, `EventSocket.swift`, th
 ELVIS_HOME="$(mktemp -d)" ELVIS_AUTOSTART=0 plugin/bin/elvis hook < payload.json; echo "exit $?"
 ```
 
-Expect no output before `exit 0`, for a valid payload and for garbage.
+Expect no output before `exit 0`, for a valid payload and for garbage. `Tests/ElvisAppTests` makes the same check on the debug build in every `make test`; the command above checks the release binary the plugin runs.
 
 ## Test what he does
 
 - Add or update a test with every behaviour change. Name it for the behaviour: `waitsAtTheDoorUntilAnswered`.
+- Test `ElvisKit` in `Tests/ElvisKitTests`. Test the command line, the hook, the socket, and starting and quitting the app in `Tests/ElvisAppTests`, which runs the built binary through `IsolatedElvis`: a temporary `ELVIS_HOME`, `ELVIS_HEADLESS` set, and `ELVIS_AUTOSTART=0` unless the test is about waking him. Never run the binary from a test any other way.
 - When a new test passes first time, break the code briefly to confirm the test can fail.
 - When he gets a result wrong, be quiet rather than guess. A missed celebration costs nothing; a wag for failing tests costs trust.
 - Never weaken an assertion or skip a test to get a pass.

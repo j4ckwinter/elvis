@@ -12,5 +12,6 @@ let package = Package(
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),
         .testTarget(name: "ElvisKitTests", dependencies: ["ElvisKit"]),
+        .testTarget(name: "ElvisAppTests", dependencies: ["elvis"]),
     ]
 )
