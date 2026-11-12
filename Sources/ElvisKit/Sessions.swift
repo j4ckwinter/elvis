@@ -3,8 +3,8 @@ struct Sessions: Sendable {
         var before: Brain.Mode
         var after: Brain.Mode
         var wasWorking: Bool
-        /// Set when the event ended a run. The length inside is nil when the run's start was never seen.
-        var finishedRun: Double??
+        var runFinished: Bool
+        var runLength: Double?
     }
 
     private struct Session: Sendable {
@@ -24,7 +24,6 @@ struct Sessions: Sendable {
     }
 
     private var live: [String: Session] = [:]
-    /// Hooks are asynchronous, so a straggler can arrive after its session has ended.
     private var ended: Set<String> = []
     private var lastStaleCheck = 0.0
 
@@ -33,7 +32,6 @@ struct Sessions: Sendable {
         return states.contains(.waiting) ? .waiting : states.contains(.working) ? .working : .calm
     }
 
-    /// Returns nil for a straggler from an ended session, which changes nothing.
     mutating func handle(_ event: WorkEvent, now: Double, tuning: Brain.Tuning) -> Change? {
         let before = mode
         let wasWorking = live[event.session]?.state == .working
@@ -42,18 +40,18 @@ struct Sessions: Sendable {
             guard event.kind == .sessionStarted || event.kind == .taskStarted else { return nil }
             ended.remove(event.session)
         }
-        var finishedRun: Double??
+        var runEnd: (finished: Bool, length: Double?) = (false, nil)
         if !event.session.isEmpty {
             var session = live[event.session] ?? Session()
             session.lastEvent = now
-            finishedRun = update(&session, for: event, now: now, tuning: tuning)
+            runEnd = update(&session, for: event, now: now, tuning: tuning)
             if session.state != .waiting {
                 session.pending = nil
                 session.pendingAgent = nil
             }
             live[event.session] = event.kind == .sessionEnded ? nil : session
         }
-        return Change(before: before, after: mode, wasWorking: wasWorking, finishedRun: finishedRun)
+        return Change(before: before, after: mode, wasWorking: wasWorking, runFinished: runEnd.finished, runLength: runEnd.length)
     }
 
     mutating func expireStale(now: Double, tuning: Brain.Tuning) {
@@ -67,8 +65,8 @@ struct Sessions: Sendable {
         }
     }
 
-    private mutating func update(_ session: inout Session, for event: WorkEvent, now: Double, tuning: Brain.Tuning) -> Double?? {
-        var finishedRun: Double??
+    private mutating func update(_ session: inout Session, for event: WorkEvent, now: Double, tuning: Brain.Tuning) -> (finished: Bool, length: Double?) {
+        var runEnd: (finished: Bool, length: Double?) = (false, nil)
         switch event.kind {
         case .sessionStarted, .throwBall, .quit:
             break
@@ -103,7 +101,7 @@ struct Sessions: Sendable {
         case .youAnswered:
             if session.state == .waiting { session.state = .working }
         case .taskFinished, .taskStumbled:
-            finishedRun = .some(session.taskStart.map { now - $0 })
+            runEnd = (true, session.taskStart.map { now - $0 })
             session.state = .idle
             session.taskStart = nil
         case .sessionIdle:
@@ -115,6 +113,6 @@ struct Sessions: Sendable {
             if ended.count > 500 { ended.removeAll() }
             ended.insert(event.session)
         }
-        return finishedRun
+        return runEnd
     }
 }

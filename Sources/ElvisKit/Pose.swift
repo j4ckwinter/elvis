@@ -1,29 +1,20 @@
 import CoreGraphics
 import Foundation
 
-/// One instant of Elvis's body, in dog units, facing right, with the ground at y = 0.
 public struct Pose: Equatable, Sendable {
     public var hip = CGPoint(x: -8, y: 18)
     public var shoulder = CGPoint(x: 8, y: 19)
-    /// Front near, front far, rear near, rear far.
     public var paws = [CGPoint(x: 9.5, y: 0), CGPoint(x: 7, y: 0), CGPoint(x: -10.5, y: 0), CGPoint(x: -7.5, y: 0)]
-    /// -1 bends the hock backward (standing); +1 folds the knee forward (sitting, lying).
     public var rearBend = -1.0
     public var head = CGPoint(x: 15.5, y: 28)
-    /// Above 0.5 the head is drawn facing the viewer.
     public var front = 0.0
-    /// Profile head: positive lifts the nose.
     public var pitch = 0.0
-    /// Front head: roll, the quizzical tilt.
     public var tilt = 0.0
     public var earLift = 0.0
     public var earDroop = 0.0
-    /// Extra ear swing on top of the physics, for shaking off.
     public var earFling = 0.0
-    /// Tail angle above straight-back, in radians, including any wag.
     public var tail = 0.5
     public var eyes = 1.0
-    /// 1 draws the closed, upturned eyes of a very pleased dog.
     public var happyEyes = 0.0
     public var brow = 0.0
     public var look = CGPoint.zero
@@ -31,7 +22,6 @@ public struct Pose: Equatable, Sendable {
     public var tongue = 0.0
     public var lift = 0.0
     public var lean = 0.0
-    /// Horizontal scale; sweeping it through zero and back reads as turning on the spot.
     public var turn = 1.0
 
     public init() {}

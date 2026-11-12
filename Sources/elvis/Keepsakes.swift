@@ -5,7 +5,6 @@ struct Keepsakes: Codable {
     var leftCorner = false
     var mud = 0.0
     var day = ""
-    /// Where the yard was left after Elvis was last carried somewhere, in screen points. Nil means his corner.
     var spot: Spot?
 
     struct Spot: Codable {

@@ -13,7 +13,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var lastSave = ProcessInfo.processInfo.systemUptime
     private var ticksPerSecond = 30.0
     private var pressedAt: NSPoint?
-    /// The pointer's offset from the window's origin while Elvis is being carried.
     private var grip: NSPoint?
     private var statusItem: NSStatusItem!
     private let captionItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
@@ -93,7 +92,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return Painter.body(of: view.frameToDraw).contains(CGPoint(x: pointer.x, y: pointer.y))
     }
 
-    /// The window starts catching clicks a tick after the pointer reaches him, so the press is checked again here.
+    // The window starts catching clicks a tick after the pointer reaches him, so the press is checked again here.
     private func press() {
         guard pointerIsOverElvis() else { return }
         pressedAt = NSEvent.mouseLocation
@@ -162,8 +161,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             stage.showWhine(at: brain.moment)
             if keepsakes.sounds { whine.play() }
         }
-        // macOS can swallow the button coming up, for instance when the screen locks mid-carry.
-        if pressedAt != nil, NSEvent.pressedMouseButtons & 1 == 0 { release() }
+        let buttonCameUpUnseen = pressedAt != nil && NSEvent.pressedMouseButtons & 1 == 0
+        if buttonCameUpUnseen { release() }
         let catchClicks = pressedAt != nil || pointerIsOverElvis()
         if window.ignoresMouseEvents == catchClicks { window.ignoresMouseEvents = !catchClicks }
         let yardOrigin = CGPoint(x: window.frame.minX / YardView.unit, y: window.frame.minY / YardView.unit)

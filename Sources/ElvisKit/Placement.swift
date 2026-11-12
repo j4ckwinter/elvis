@@ -1,8 +1,6 @@
 import CoreGraphics
 
 public enum Placement {
-    /// Fits the window inside `screen` and returns the yard x that keeps Elvis under the same point on screen,
-    /// as far as the yard's own edges allow.
     public static func settle(window: CGRect, dogX: Double, unit: Double, within screen: CGRect) -> (origin: CGPoint, dogX: Double) {
         let dogOnScreen = window.minX + dogX * unit
         let origin = CGPoint(

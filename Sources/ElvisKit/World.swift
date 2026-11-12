@@ -1,13 +1,10 @@
 public struct World: Equatable, Sendable {
     public var x = Yard.home
-    /// +1 facing right, -1 facing left.
     public var facing = 1.0
     public var mud = 0.0
-    /// 1 straight after a test failure, fading back to 0.
     public var glum = 0.0
     public var ball: Ball?
     public var doorOpen = false
-    /// Cursor position in yard units when it is close enough to be interesting.
     public var cursor: (x: Double, y: Double)?
 
     public init() {}

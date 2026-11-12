@@ -1,6 +1,5 @@
 import Foundation
 
-/// Field names follow https://code.claude.com/docs/en/hooks.md as read on 2026-11-12.
 public enum ClaudeHooks {
     public static func event(fromPayload payload: Data) -> WorkEvent? {
         guard let object = try? JSONSerialization.jsonObject(with: payload) as? [String: Any],
@@ -14,9 +13,9 @@ public enum ClaudeHooks {
 
         switch name {
         case "SessionStart":
-            // Compaction, /clear and forks restart the session record mid-conversation; nobody has just sat down.
             let source = object["source"] as? String ?? "startup"
-            return source == "startup" || source == "resume" ? WorkEvent(.sessionStarted, session: session) : nil
+            let someoneJustSatDown = source == "startup" || source == "resume"
+            return someoneJustSatDown ? WorkEvent(.sessionStarted, session: session) : nil
         case "UserPromptSubmit":
             return WorkEvent(.taskStarted, session: session)
         case "PreToolUse":
@@ -42,9 +41,7 @@ public enum ClaudeHooks {
         case "PostToolUseFailure":
             let error = object["error"] as? String ?? ""
             let interrupted = object["is_interrupt"] as? Bool ?? false
-            // Only a command that ran and exited reports "Exit code N"; a declined or timed-out call says nothing about the tests.
-            let status = error.hasPrefix("Exit code ") ? Int(error.dropFirst(10).prefix(while: \.isNumber)) : nil
-            guard !interrupted, let status else {
+            guard !interrupted, let status = exitStatus(ofCommandThatRan: error) else {
                 return WorkEvent(.toolFinished, session: session, subject: subject, agent: agent)
             }
             let kind = shellTestVerdict(tool: tool, input: input, exitStatus: status, output: error)
@@ -73,6 +70,10 @@ public enum ClaudeHooks {
         case .failed: return .testsFailed
         case nil: return nil
         }
+    }
+
+    private static func exitStatus(ofCommandThatRan error: String) -> Int? {
+        error.hasPrefix("Exit code ") ? Int(error.dropFirst(10).prefix(while: \.isNumber)) : nil
     }
 
     private static func output(of response: Any?) -> String? {

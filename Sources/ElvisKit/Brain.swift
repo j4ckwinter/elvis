@@ -1,7 +1,5 @@
 import Foundation
 
-/// Decides what Elvis does. It owns no clock and no randomness of its own, so a seed and a
-/// sequence of `handle` and `tick` calls fully determine his behaviour.
 public struct Brain: Sendable {
     public enum Mode: Equatable, Sendable { case calm, working, waiting }
     public enum Cue: Equatable, Sendable { case whine }
@@ -14,10 +12,8 @@ public struct Brain: Sendable {
         public var dozeUntil = 240.0
         public var fetchEvery = 45.0
         public var whineEvery = 90.0
-        /// Longer than any single tool call is allowed to run, so silence this long means the session has gone.
         public var staleAfter = 15.0 * 60
         public var waitingStaleAfter = 2.0 * 60 * 60
-        /// A tool that starts this soon after a permission request is a sibling call, not proof the user answered.
         public var siblingWindow = 3.0
         public init() {}
     }
@@ -35,7 +31,6 @@ public struct Brain: Sendable {
     public internal(set) var world = World()
     public private(set) var action = Action.sit
     public private(set) var elapsed = 0.0
-    /// Changes every time a new action starts, including a repeat of the same one.
     public private(set) var actionSerial = 0
     public private(set) var now = 0.0
 
@@ -123,8 +118,8 @@ public struct Brain: Sendable {
                 react(action.isLyingDown ? [Step(.startle, 0.45), Step(.boundUp, 1.3)] : [Step(.boundUp, 1.1)])
             }
         case .taskFinished:
-            guard after == .calm, change.wasWorking || before != .calm, let ran = change.finishedRun else { break }
-            finish(after: ran)
+            guard after == .calm, change.wasWorking || before != .calm, change.runFinished else { break }
+            finish(after: change.runLength)
         case .taskStumbled:
             if after == .calm { react([Step(.confused, 2.6)], append: reacting) }
         case .needsYou, .sessionIdle, .sessionEnded, .quit:
@@ -168,7 +163,6 @@ public struct Brain: Sendable {
         }
     }
 
-    /// A pointer that is merely parked on top of him is not a stroke, so only a moving one counts.
     public mutating func cursor(at point: (x: Double, y: Double)?) {
         if let point, let last = world.cursor, abs(point.x - last.x) + abs(point.y - last.y) > 0.5 {
             cursorMovedAt = now

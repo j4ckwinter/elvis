@@ -9,8 +9,8 @@ public enum TestRuns {
         guard let run = testSegment(in: command) else { return nil }
         if run.statusIsMasked { return output.flatMap(verdict(fromOutput:)) }
         if exitStatus == 0 { return .passed }
-        // 126 and 127 mean the runner never started; 128 and above mean a signal ended it.
-        if exitStatus >= 126 { return nil }
+        let runnerNeverStartedOrWasKilled = exitStatus >= 126
+        if runnerNeverStartedOrWasKilled { return nil }
         return .failed
     }
 
@@ -31,7 +31,6 @@ public enum TestRuns {
 
     struct Piece {
         var words: [String]
-        /// The operator that follows this piece, or "" for the last one.
         var joiner: String
     }
 
@@ -58,11 +57,11 @@ public enum TestRuns {
                 current.append(chars[i + 1])
                 i += 1
             } else if c == "&" || c == "|" {
+                let isPartOfRedirect = c == "&" && (current.hasSuffix(">") || (i + 1 < chars.count && chars[i + 1] == ">"))
                 if i + 1 < chars.count, chars[i + 1] == c {
                     flush(String([c, c]))
                     i += 1
-                } else if c == "&", current.hasSuffix(">") || (i + 1 < chars.count && chars[i + 1] == ">") {
-                    // Part of a redirect such as `2>&1` or `&>log`, not a background operator.
+                } else if isPartOfRedirect {
                     current.append(c)
                 } else {
                     flush(String(c))
@@ -179,8 +178,6 @@ public enum TestRuns {
         return parts.contains { $0 == "test" || $0 == "tests" || $0 == "spec" || $0 == "e2e" || $0 == "unittest" }
     }
 
-    /// Reads a verdict from runner output. A clear failure count or failure mark wins. A vaguer sign of trouble
-    /// alongside a pass summary is treated as unknown, because staying quiet beats celebrating a failure.
     static func verdict(fromOutput output: String) -> Verdict? {
         let text = "\n" + output.lowercased() + "\n"
         let strongMarks = [

@@ -63,8 +63,7 @@ enum EventSocket {
         return line.withUnsafeBytes { write(fd, $0.baseAddress, $0.count) } == line.count
     }
 
-    /// Starts accepting events. Each one is delivered on the main queue.
-    static func listen(_ deliver: @escaping (WorkEvent) -> Void) throws {
+    static func listen(deliveringOnMain deliver: @escaping (WorkEvent) -> Void) throws {
         try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         unlink(path)
         guard var address = address(for: path) else { throw CocoaError(.fileWriteInvalidFileName) }

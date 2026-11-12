@@ -34,8 +34,6 @@ public struct Stage: Sendable {
         rng = SplitMix(seed: seed)
     }
 
-    /// - Parameter yardOrigin: where the yard itself sits, in dog units. Moving it swings his ears and, while he is
-    ///   being carried, the rest of him.
     public mutating func advance(_ m: Moment, dt: Double, yardOrigin: CGPoint = .zero) -> Frame {
         time += dt
         let started = m.serial != serial

@@ -1,6 +1,5 @@
 import Foundation
 
-/// The strip of screen Elvis lives in, measured in dog units. Ground is y = 0 and x grows to the right.
 public enum Yard {
     public static let width = 230.0
     public static let height = 84.0

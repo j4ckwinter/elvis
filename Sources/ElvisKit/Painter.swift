@@ -1,7 +1,6 @@
 import CoreGraphics
 import Foundation
 
-/// Draws a frame. The context's origin is the yard's bottom-left corner with y pointing up, in points.
 public enum Painter {
     public static let groundMargin = 6.0
 
@@ -29,8 +28,6 @@ public enum Painter {
         ctx.restoreGState()
     }
 
-    /// The part of the yard this frame touches, in dog units with the ground at y = 0. Everything `draw` paints
-    /// lies inside it, so a caller can repaint only this patch.
     public static func bounds(of frame: Frame) -> CGRect {
         var area = CGRect(x: frame.x - 40, y: -groundMargin, width: 80, height: groundMargin + 52 + max(0, frame.pose.lift))
         if frame.action == .held {

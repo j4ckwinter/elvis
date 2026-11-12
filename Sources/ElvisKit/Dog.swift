@@ -7,8 +7,6 @@ struct Dog {
     var mud: Double
     var carrying: Bool
 
-    /// The silhouette cases get the pale rim that keeps a black dog visible on a dark desktop. Limbs and discs
-    /// are kept as primitives because stroking a line is far cheaper than outlining and filling its shape.
     enum Item {
         case coat(CGPath, CGColor)
         case limb(CGPoint, CGPoint, Double, CGColor)

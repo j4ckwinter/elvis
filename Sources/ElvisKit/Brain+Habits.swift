@@ -15,8 +15,6 @@ extension Brain {
             return [Step(.go(to: Yard.doorSpot, gait: .trot))]
         }
         world.facing = 1
-        // No sound here: Claude Code reports nothing at the moment of approval, so a long approved command
-        // looks the same as an unanswered prompt, and whining at someone who already answered would be wrong.
         if now - modeSince > 150 {
             return [Step(.lieByDoor, random(8, 14))]
         }
