@@ -31,31 +31,18 @@ public struct Brain: Sendable {
         }
     }
 
-    struct Session: Sendable {
-        enum State: Sendable { case idle, working, waiting }
-        var state = State.idle
-        var taskStart: Double?
-        var waitingSince = 0.0
-        var pending: String?
-        var pendingAgent: String?
-        var lastEvent = 0.0
-    }
-
     public var tuning = Tuning()
     public private(set) var world = World()
     public private(set) var action = Action.sit
     public private(set) var elapsed = 0.0
     /// Changes every time a new action starts, including a repeat of the same one.
     public private(set) var actionSerial = 0
-    public private(set) var mode = Mode.calm
     public private(set) var now = 0.0
 
     public private(set) var duration = 2.0
     private var queue: [Step] = []
     private var reacting = false
-    private var sessions: [String: Session] = [:]
-    /// Hooks are asynchronous, so a straggler can arrive after its session has ended.
-    private var endedSessions: Set<String> = []
+    private var sessions = Sessions()
     private var rng: SplitMix
     private var cues: [Cue] = []
 
@@ -70,88 +57,28 @@ public struct Brain: Sendable {
     private var hoverTime = 0.0
     private var pettedThisHover = false
     private var cursorMovedAt = -1e9
-    private var lastStaleCheck = 0.0
 
     public init(seed: UInt64) {
         rng = SplitMix(seed: seed)
         start(Step(.wagAtYou, 2.2))
     }
 
+    public var mode: Mode { sessions.mode }
+
     public var moment: Moment {
         Moment(action: action, elapsed: elapsed, length: duration, serial: actionSerial, world: world, mode: mode, now: now)
     }
 
     public mutating func handle(_ event: WorkEvent) {
-        let before = mode
-        var finishedRun: Double??
-        let wasWorkingSession = sessions[event.session]?.state == .working
-
-        if endedSessions.contains(event.session) {
-            guard event.kind == .sessionStarted || event.kind == .taskStarted else { return }
-            endedSessions.remove(event.session)
-        }
-        if !event.session.isEmpty {
-            var session = sessions[event.session] ?? Session()
-            session.lastEvent = now
-            switch event.kind {
-            case .sessionStarted, .throwBall, .quit:
-                break
-            case .taskStarted:
-                session.state = .working
-                session.taskStart = now
-                session.pending = nil
-            case .toolStarted:
-                if session.state == .waiting {
-                    if now - session.waitingSince >= tuning.siblingWindow, event.agent == session.pendingAgent { session.state = .working }
-                } else {
-                    beginWork(&session)
-                }
-            case .toolFinished, .testsPassed, .testsFailed:
-                if session.state == .waiting {
-                    if session.pending == nil || session.pending == event.subject { session.state = .working }
-                } else {
-                    beginWork(&session)
-                }
-            case .needsYou:
-                if session.state != .waiting {
-                    beginWork(&session)
-                    session.state = .waiting
-                    session.waitingSince = now
-                    session.pending = nil
-                    session.pendingAgent = event.agent
-                }
-                if let subject = event.subject {
-                    session.pending = subject
-                    session.pendingAgent = event.agent
-                }
-            case .youAnswered:
-                if session.state == .waiting { session.state = .working }
-            case .taskFinished, .taskStumbled:
-                finishedRun = .some(session.taskStart.map { now - $0 })
-                session.state = .idle
-                session.taskStart = nil
-            case .sessionIdle:
-                if session.state == .working {
-                    session.state = .idle
-                    session.taskStart = nil
-                }
-            case .sessionEnded:
-                if endedSessions.count > 500 { endedSessions.removeAll() }
-                endedSessions.insert(event.session)
-            }
-            if session.state != .waiting {
-                session.pending = nil
-                session.pendingAgent = nil
-            }
-            sessions[event.session] = event.kind == .sessionEnded ? nil : session
-        }
+        guard let change = sessions.handle(event, now: now, tuning: tuning) else { return }
+        let before = change.before
+        let after = change.after
         if let kind = event.flavour, event.kind == .toolStarted {
             flavour = kind
             flavourAt = now
         }
 
-        refreshMode()
-        let after = mode
+        markModeChange(from: before)
         let failedAgain = event.kind == .testsFailed && now - lastFail < 60
         let redToGreen = event.kind == .testsPassed && world.glum > 0.25
         if event.kind == .testsFailed {
@@ -196,7 +123,7 @@ public struct Brain: Sendable {
                 react(action.isLyingDown ? [Step(.startle, 0.45), Step(.boundUp, 1.3)] : [Step(.boundUp, 1.1)])
             }
         case .taskFinished:
-            guard after == .calm, wasWorkingSession || before != .calm, let ran = finishedRun else { break }
+            guard after == .calm, change.wasWorking || before != .calm, let ran = change.finishedRun else { break }
             finish(after: ran)
         case .taskStumbled:
             if after == .calm { react([Step(.confused, 2.6)], append: reacting) }
@@ -303,32 +230,17 @@ public struct Brain: Sendable {
         }
     }
 
-    private func beginWork(_ session: inout Session) {
-        guard session.state == .idle else { return }
-        session.state = .working
-        if session.taskStart == nil { session.taskStart = now }
-    }
-
-    private mutating func refreshMode() {
-        let states = sessions.values.map(\.state)
-        let next: Mode = states.contains(.waiting) ? .waiting : states.contains(.working) ? .working : .calm
-        guard next != mode else { return }
-        mode = next
-        modeSince = now
-        if next == .calm { settledSince = now }
-        world.doorOpen = next == .waiting
-    }
-
     private mutating func expireStaleSessions() {
-        guard now - lastStaleCheck > 5 else { return }
-        lastStaleCheck = now
-        for (id, session) in sessions where session.state != .idle {
-            let limit = session.state == .waiting ? tuning.waitingStaleAfter : tuning.staleAfter
-            guard now - session.lastEvent > limit else { continue }
-            sessions[id]?.state = .idle
-            sessions[id]?.taskStart = nil
-        }
-        refreshMode()
+        let before = mode
+        sessions.expireStale(now: now, tuning: tuning)
+        markModeChange(from: before)
+    }
+
+    private mutating func markModeChange(from before: Mode) {
+        guard mode != before else { return }
+        modeSince = now
+        if mode == .calm { settledSince = now }
+        world.doorOpen = mode == .waiting
     }
 
     private mutating func react(_ steps: [Step], append: Bool = false) {
