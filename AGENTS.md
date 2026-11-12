@@ -44,6 +44,7 @@ Each decision has one owner. Put new code with the owner of the decision it make
 | Drawing Elvis | `Dog.swift`, `Dog+Head.swift` |
 | Drawing everything else | `Painter.swift` and its `Painter+<Part>.swift` files |
 | Where the yard window may rest on a screen | `Placement.swift` |
+| Whether a press on Elvis is a pat or a pick-up, and where the yard window goes while he is carried | `PickUpGesture.swift` |
 | Windows, the menu, sound, the socket, the command line | `Sources/elvis` |
 
 `ElvisKit` stays free of AppKit, clocks, and unseeded randomness, so that any behaviour can be reproduced in a test from a seed and a list of events. Time reaches `Brain` only through `tick`.

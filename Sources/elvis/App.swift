@@ -12,8 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var lastTick = ProcessInfo.processInfo.systemUptime
     private var lastSave = ProcessInfo.processInfo.systemUptime
     private var ticksPerSecond = 30.0
-    private var pressedAt: NSPoint?
-    private var grip: NSPoint?
+    private var gesture = PickUpGesture()
     private var statusItem: NSStatusItem!
     private let captionItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let soundsItem = NSMenuItem(title: "Sounds", action: #selector(toggleSounds), keyEquivalent: "")
@@ -56,7 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         window.contentView = view
         view.onPress = { [weak self] in self?.press() }
         view.onDrag = { [weak self] in self?.drag() }
-        view.onRelease = { [weak self] in self?.release() }
+        view.onRelease = { [weak self] in self?.releaseButton() }
         view.wantsLayer = true
         view.layer?.contentsFormat = .RGBA8Uint
         self.window = window
@@ -101,35 +100,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     // The window starts catching clicks a tick after the pointer reaches him, so the press is checked again here.
     private func press() {
-        guard pointerIsOverElvis() else { return }
-        pressedAt = NSEvent.mouseLocation
+        gesture.press(onElvis: pointerIsOverElvis(), at: NSEvent.mouseLocation)
     }
 
     private func drag() {
         guard let window else { return }
-        let mouse = NSEvent.mouseLocation
-        if grip == nil, let start = pressedAt, hypot(mouse.x - start.x, mouse.y - start.y) > 3 {
-            grip = NSPoint(x: start.x - window.frame.minX, y: start.y - window.frame.minY)
+        switch gesture.drag(to: NSEvent.mouseLocation, windowOrigin: window.frame.origin) {
+        case .lifted(let origin):
             brain.pickUp()
             if ticksPerSecond < 30 { schedule(rate: 30) }
+            window.setFrameOrigin(origin)
+        case .carried(let origin):
+            window.setFrameOrigin(origin)
+        case nil:
+            break
         }
-        guard let grip else { return }
-        window.setFrameOrigin(NSPoint(x: mouse.x - grip.x, y: mouse.y - grip.y))
     }
 
-    private func release() {
-        guard pressedAt != nil else { return }
-        pressedAt = nil
-        if grip == nil {
+    private func releaseButton() {
+        finish(gesture.release())
+    }
+
+    private func releaseIfButtonCameUpUnseen() {
+        guard gesture.isPressed else { return }
+        finish(gesture.releaseIfButtonCameUpUnseen(buttonIsDown: NSEvent.pressedMouseButtons & 1 != 0))
+    }
+
+    private func finish(_ release: PickUpGesture.Release?) {
+        switch release {
+        case .pat:
             brain.pat()
             if ticksPerSecond < 30 { schedule(rate: 30) }
-        } else {
+        case .putDown:
             putDown()
+        case nil:
+            break
         }
     }
 
     private func putDown() {
-        grip = nil
         guard let window else { return }
         let mouse = NSEvent.mouseLocation
         let screen = NSScreen.screens.first { $0.frame.contains(mouse) } ?? window.screen ?? NSScreen.screens.first
@@ -170,9 +179,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             stage.showWhine(at: brain.moment)
             if keepsakes.sounds { whine.play() }
         }
-        let buttonCameUpUnseen = pressedAt != nil && NSEvent.pressedMouseButtons & 1 == 0
-        if buttonCameUpUnseen { release() }
-        let catchClicks = pressedAt != nil || pointerIsOverElvis()
+        releaseIfButtonCameUpUnseen()
+        let catchClicks = gesture.isPressed || pointerIsOverElvis()
         if let window, window.ignoresMouseEvents == catchClicks { window.ignoresMouseEvents = !catchClicks }
         let corner = window?.frame.origin ?? .zero
         let yardOrigin = CGPoint(x: corner.x / YardView.unit, y: corner.y / YardView.unit)
