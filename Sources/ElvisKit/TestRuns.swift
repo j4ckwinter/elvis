@@ -11,6 +11,7 @@ public enum TestRuns {
         if exitStatus == 0 { return .passed }
         let runnerNeverStartedOrWasKilled = exitStatus >= 126
         if runnerNeverStartedOrWasKilled { return nil }
+        if run.statusMayBeAnotherCommands { return output.map(reportsFailedTests) == true ? .failed : nil }
         return .failed
     }
 
@@ -20,13 +21,16 @@ public enum TestRuns {
 
     struct Segment {
         var statusIsMasked: Bool
+        var statusMayBeAnotherCommands: Bool
     }
 
     static func testSegment(in command: String) -> Segment? {
         let pieces = split(command)
         guard let index = pieces.firstIndex(where: { isTestInvocation($0.words) }) else { return nil }
         let masked = pieces[index...].dropLast().contains { $0.joiner != "&&" } || pieces.last?.joiner == "&"
-        return Segment(statusIsMasked: masked)
+        let runsOnlyIfTheStepBeforeSucceeds = index > pieces.startIndex && pieces[index - 1].joiner == "&&"
+        let isFollowedByAnotherCommand = index < pieces.endIndex - 1
+        return Segment(statusIsMasked: masked, statusMayBeAnotherCommands: runsOnlyIfTheStepBeforeSucceeds || isFollowedByAnotherCommand)
     }
 
     struct Piece {

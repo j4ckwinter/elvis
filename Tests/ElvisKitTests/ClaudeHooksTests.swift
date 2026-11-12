@@ -76,5 +76,10 @@ import Testing
         #expect(event(#"{"hook_event_name":"PostToolUseFailure","session_id":"s","tool_name":"Bash","tool_input":{"command":"npm test"},"error":"The user doesn't want to proceed"}"#)?.kind == .toolFinished)
         #expect(event(#"{"hook_event_name":"PostToolUseFailure","session_id":"s","tool_name":"Bash","tool_input":{"command":"npm test"},"error":"Exit code 130","is_interrupt":true}"#)?.kind == .toolFinished)
         #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"npm test","run_in_background":true},"tool_response":{"stdout":""}}"#)?.kind == .toolFinished)
+        #expect(event(#"{"hook_event_name":"PostToolUseFailure","session_id":"s","tool_name":"Bash","tool_input":{"command":"cd missing && npm test"},"error":"Exit code 1\n(eval):cd:1: no such file or directory: missing"}"#)?.kind == .toolFinished)
+    }
+
+    @Test func failingTestsAreStillReportedAfterAChangeOfDirectory() {
+        #expect(event(#"{"hook_event_name":"PostToolUseFailure","session_id":"s","tool_name":"Bash","tool_input":{"command":"cd app && npm test"},"error":"Exit code 1\nTests: 1 failed, 12 passed, 13 total"}"#)?.kind == .testsFailed)
     }
 }

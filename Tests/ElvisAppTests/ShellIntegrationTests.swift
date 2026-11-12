@@ -26,6 +26,12 @@ import Testing
         #expect(listener.linesDelivered().isEmpty)
     }
 
+    @Test func aChainThatFailedBeforeTheRunnerStartedIsNotReported() throws {
+        let listener = try UnixSocket.Listener(at: elvis.socket)
+        try elvis.run("ran", "1", "cd missing && npm test")
+        #expect(listener.linesDelivered().isEmpty)
+    }
+
     @Test func tellingHimWhenHeIsNotRunningFailsAndSaysSo() throws {
         let tell = try elvis.run("tell", "tests-passed")
         #expect(tell.status != 0)

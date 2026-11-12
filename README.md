@@ -66,7 +66,7 @@ Elvis can also react to tests you run yourself in zsh. Add this to `~/.zshrc`:
 eval "$(/path/to/elvis shell-init zsh)"
 ```
 
-It reports each finished command's exit status to Elvis, who ignores everything that is not a test run. When a pipe hides the runner's exit status, as in `npm test | tail`, he stays out of it rather than guess.
+It reports each finished command's exit status to Elvis, who ignores everything that is not a test run. When a pipe hides the runner's exit status, as in `npm test | tail`, he stays out of it rather than guess. He does the same when a chain such as `cd app && npm test` fails, because the status could belong to either command.
 
 ## What leaves the hook
 
@@ -95,5 +95,5 @@ ELVIS_FILM=/some/dir .build/release/elvis run   # saves contact sheets of the li
 - Carrying him has been tested in the logic only, not with a real pointer. With "Displays have separate Spaces" on, he may disappear briefly while he straddles two displays.
 - The permission-prompt behaviour follows the documented hook events. It has been exercised with simulated events, not with a live permission prompt.
 - Claude Code reports nothing at the moment you approve a command, so he stays by the door until that command finishes. This is also why he never whines there.
-- A command such as `cd missing && npm test` that fails before the runner starts is read as a test failure.
+- When a chain such as `cd app && npm test` fails, he blames the tests only if the output reports failing tests. Tests that fail to compile inside a chain go unremarked.
 - Test detection is a list of known runners. An unusual runner goes unnoticed until it is added to `TestRuns.swift`.

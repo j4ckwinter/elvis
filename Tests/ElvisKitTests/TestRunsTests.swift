@@ -58,6 +58,25 @@ import Testing
         #expect(TestRuns.verdict(command: "pytest", exitStatus: 2, output: nil) == .failed)
     }
 
+    @Test func aFailedChainIsBlamedOnTheTestsOnlyWhenTheOutputReportsThemFailing() {
+        #expect(TestRuns.verdict(command: "cd missing && npm test", exitStatus: 1, output: "cd: no such file or directory: missing") == nil)
+        #expect(TestRuns.verdict(command: "cd missing && npm test", exitStatus: 1, output: nil) == nil)
+        #expect(TestRuns.verdict(command: "npm run build && npm test", exitStatus: 1, output: "Found 3 errors.\nnpm ERR! build failed") == nil)
+        #expect(TestRuns.verdict(command: "npm test && git diff --exit-code", exitStatus: 1, output: "Tests: 13 passed, 13 total") == nil)
+        #expect(TestRuns.verdict(command: "cd app && npm test", exitStatus: 1, output: "Tests: 1 failed, 12 passed, 13 total") == .failed)
+        #expect(TestRuns.verdict(command: "npm test && echo done", exitStatus: 1, output: "Tests: 1 failed, 12 passed, 13 total") == .failed)
+    }
+
+    @Test func aChainThatSucceedsMeansTheTestsPassed() {
+        #expect(TestRuns.verdict(command: "cd app && npm test", exitStatus: 0, output: nil) == .passed)
+        #expect(TestRuns.verdict(command: "npm run build && npm test && echo done", exitStatus: 0, output: nil) == .passed)
+    }
+
+    @Test func aStepThatCannotStopTheRunnerLeavesTheStatusToTheTests() {
+        #expect(TestRuns.verdict(command: "cd app; npm test", exitStatus: 1, output: nil) == .failed)
+        #expect(TestRuns.verdict(command: "npm run build && echo built; npm test", exitStatus: 1, output: nil) == .failed)
+    }
+
     @Test func outputIsReadByItsCountsNotItsVocabulary() {
         let piped = "mvn test | tail"
         #expect(TestRuns.verdict(command: piped, exitStatus: 0, output: "Tests run: 5, Failures: 0, Errors: 0, Skipped: 0\nBUILD SUCCESS") == .passed)
