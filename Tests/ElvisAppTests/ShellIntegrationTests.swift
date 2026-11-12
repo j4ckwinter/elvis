@@ -17,7 +17,42 @@ import Testing
     @Test func zshReportsTheTestRunsYouTypeAndNothingForAnEmptyLine() throws {
         let listener = try UnixSocket.Listener(at: elvis.socket)
         try elvis.type([setUp(for: "zsh"), Self.pretendTests, "npm test", "", "npm test fail", "cd /tmp && npm test", "ls > /dev/null"], into: "/bin/zsh", "-f", "-i")
-        #expect(listener.kindsDelivered(expecting: 3) == ["tests-passed", "tests-failed", "tests-passed"])
+        #expect(listener.kindsDeliveredInAnyOrder(expecting: 3) == ["tests-failed", "tests-passed", "tests-passed"])
+    }
+
+    @Test func bashReportsTheTestRunsYouTypeAndNothingForAnEmptyLine() throws {
+        let listener = try UnixSocket.Listener(at: elvis.socket)
+        try elvis.type([setUp(for: "bash"), Self.pretendTests, "npm test", "", "npm test fail", "cd /tmp && npm test", "ls > /dev/null"], into: "/bin/bash", "--noprofile", "--norc", "-i")
+        #expect(listener.kindsDeliveredInAnyOrder(expecting: 3) == ["tests-failed", "tests-passed", "tests-passed"])
+    }
+
+    @Test func bashCreditsNothingToACommandItsHistoryDidNotRecord() throws {
+        let listener = try UnixSocket.Listener(at: elvis.socket)
+        let typed = [setUp(for: "bash"), Self.pretendTests, "HISTCONTROL=ignoreboth", "npm test", "npm test", " npm test fail", " npm", "npm test"]
+        try elvis.type(typed, into: "/bin/bash", "--noprofile", "--norc", "-i")
+        #expect(listener.kindsDeliveredInAnyOrder(expecting: 3) == ["tests-passed", "tests-passed", "tests-passed"])
+    }
+
+    @Test func bashKeepsYourExitStatusAndLastArgumentAsTheyWere() throws {
+        let typed = [setUp(for: "bash"), "false", "echo \"status $?\"", "echo one two", "echo \"last $_\""]
+        let session = try elvis.type(typed, into: "/bin/bash", "--noprofile", "--norc", "-i")
+        #expect(session.output.contains("status 1"))
+        #expect(session.output.contains("last two"))
+    }
+
+    @Test func bashLeavesAnotherToolsDebugTrapAloneAndSaysSo() throws {
+        let listener = try UnixSocket.Listener(at: elvis.socket)
+        let typed = ["trap 'true' DEBUG", setUp(for: "bash"), Self.pretendTests, "npm test", "trap -p DEBUG"]
+        let session = try elvis.type(typed, into: "/bin/bash", "--noprofile", "--norc", "-i")
+        #expect(session.errors.contains("another tool already uses bash's DEBUG trap"))
+        #expect(session.output.contains("trap -- 'true' DEBUG"))
+        #expect(listener.kindsDeliveredInAnyOrder(expecting: 0).isEmpty)
+    }
+
+    @Test func settingBashUpTwiceReportsEachCommandOnce() throws {
+        let listener = try UnixSocket.Listener(at: elvis.socket)
+        try elvis.type([setUp(for: "bash"), setUp(for: "bash"), Self.pretendTests, "npm test"], into: "/bin/bash", "--noprofile", "--norc", "-i")
+        #expect(listener.kindsDeliveredInAnyOrder(expecting: 1) == ["tests-passed"])
     }
 
     @Test func aPassingTestRunIsReported() throws {

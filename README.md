@@ -80,13 +80,21 @@ Left alone he scratches, sneezes, stretches, chases his tail and regrets it, cir
 
 ## Your own test runs, commits, and pushes
 
-Elvis can also react to tests you run yourself in zsh, and to your own `git commit` and `git push`. Add this to `~/.zshrc`:
+Elvis can also react to tests you run yourself in zsh or bash, and to your own `git commit` and `git push`. Add this to `~/.zshrc`:
 
 ```sh
 eval "$(/path/to/elvis shell-init zsh)"
 ```
 
+Or this to `~/.bash_profile`, which is the file bash reads in a macOS terminal:
+
+```sh
+eval "$(/path/to/elvis shell-init bash)"
+```
+
 It reports each finished command's exit status to Elvis, who ignores everything that is not a test run, a commit, or a push. When a pipe hides the command's exit status, as in `npm test | tail` or `git push | cat`, he stays out of it rather than guess. He does the same when a chain such as `cd app && npm test` fails, because the status could belong to either command.
+
+Bash has no hook that hands over the line you typed, so there he reads it from the shell's history and checks it against the command bash is about to run. He stays out of anything typed through an alias, behind `time`, or kept out of history with a leading space. If another tool already holds bash's `DEBUG` trap he says so once and leaves it alone. Checked with the bash 3.2 that ships with macOS.
 
 ## What leaves the hook
 
@@ -119,4 +127,5 @@ ELVIS_FILM=/some/dir .build/release/elvis run   # saves contact sheets of the li
 - Only a commit and a push count as saving and sending work. A merge, a rebase, or `gh pr create` goes unremarked.
 - He hears about Claude's commits and pushes from Claude Code itself, which marks the result of a command that committed or pushed. Seen in Claude Code 2.1.322; a version that does not mark them leaves him unaware.
 - In your own shell he sees the command and its exit status but no output, so a `git push` with nothing to send still gets a bark.
+- The shell integration covers zsh and bash. Fish is not supported.
 - Test detection is a list of known runners. An unusual runner goes unnoticed until it is added to `TestRuns.swift`.

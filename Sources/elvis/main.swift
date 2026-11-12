@@ -37,7 +37,7 @@ let usage = """
     elvis restart         swap the running Elvis for this build
     elvis tell <event>    report something by hand: \(WorkEvent.Kind.allCases.map(\.rawValue).joined(separator: ", "))
     elvis demo            walk through his reactions
-    elvis shell-init zsh  print shell integration for your own test runs
+    elvis shell-init <zsh|bash>  print shell integration for your own test runs, commits, and pushes
     elvis hook            (used by the Claude Code plugin) read a hook payload on stdin
     elvis ran <status> <command>  (used by shell integration)
     elvis sheets [dir]    render pose sheets as PNGs
@@ -89,7 +89,7 @@ case "ran":
 
 case "shell-init":
     guard let shell = arguments.dropFirst().first.flatMap(ShellIntegration.Shell.init(rawValue:)) else {
-        fail("only zsh is supported: elvis shell-init zsh")
+        fail("shell-init needs one of: \(ShellIntegration.Shell.allCases.map(\.rawValue).joined(separator: ", "))")
     }
     print(ShellIntegration.script(for: shell, elvis: ownPath()))
 
