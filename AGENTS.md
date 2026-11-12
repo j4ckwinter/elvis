@@ -49,8 +49,18 @@ Each decision has one owner. Put new code with the owner of the decision it make
 - Keep state narrowly owned. Prefer values and pure functions; pass in what a function needs rather than reaching for it.
 - Put a number that tunes behaviour in `Brain.Tuning` or beside the pose it shapes, with a name. Do not scatter the same threshold across files.
 - Delete code that nothing calls. Do not leave commented-out code, debug switches, or options added for a future that has not arrived.
-- Comment only what the code cannot say: units and sign conventions, a constraint imposed by Claude Code or macOS, the reason for a surprising choice. No section banners and no narration.
 - Handle failure where it can be handled. Do not swallow an error that the user would need to know about.
+
+## Leave comments out
+
+Write code that needs no comments. A comment is the exception, and it has to earn its place.
+
+- Before writing one, try a clearer name, a smaller function, or a type that makes the point. Write the comment only when all of those fail.
+- A comment may stay when it records something the code cannot express and a reader would get wrong without it: the unit or sign convention of a number, a constraint imposed by Claude Code, macOS, or a file format, or the reason for a choice that looks like a mistake.
+- Do not describe what the code does, restate a name, label sections, narrate the steps of a test, or record history. No `// MARK:` banners, no commented-out code, and no TODO notes.
+- Doc comments (`///`) follow the same rule. A type or function whose name says what it is needs none.
+- When a change makes a comment untrue, fix or delete the comment in the same commit.
+- Remove an unnecessary comment when you are already changing the code it sits on. Do not sweep other files for comments unless Jack asks for a cleanup.
 
 ## Keep the hook harmless
 
