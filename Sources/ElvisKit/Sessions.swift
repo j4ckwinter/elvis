@@ -1,10 +1,7 @@
-/// What Claude Code's sessions are doing, worked out from the events they send.
 struct Sessions: Sendable {
-    /// What one event did, for `Brain` to react to.
     struct Change: Sendable {
         var before: Brain.Mode
         var after: Brain.Mode
-        /// Whether the event's own session was working when it arrived.
         var wasWorking: Bool
         /// Set when the event ended a run. The length inside is nil when the run's start was never seen.
         var finishedRun: Double??
@@ -70,7 +67,6 @@ struct Sessions: Sendable {
         }
     }
 
-    /// Returns the value for `Change.finishedRun`.
     private mutating func update(_ session: inout Session, for event: WorkEvent, now: Double, tuning: Brain.Tuning) -> Double?? {
         var finishedRun: Double??
         switch event.kind {

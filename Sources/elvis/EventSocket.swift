@@ -2,7 +2,6 @@ import Darwin
 import ElvisKit
 import Foundation
 
-/// The local socket that carries `WorkEvent`s from hooks and the CLI to the running app.
 enum EventSocket {
     static var directory: String {
         if let override = ProcessInfo.processInfo.environment["ELVIS_HOME"], !override.isEmpty { return override }
@@ -39,7 +38,6 @@ enum EventSocket {
         return fd
     }
 
-    /// Takes a lock that lasts for the life of the process, so two launches racing each other cannot both stay.
     static func claimSoleInstance() -> Bool {
         do {
             try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
@@ -57,7 +55,6 @@ enum EventSocket {
         return true
     }
 
-    /// Returns false when Elvis is not running.
     @discardableResult
     static func send(_ event: WorkEvent) -> Bool {
         guard let fd = connect() else { return false }

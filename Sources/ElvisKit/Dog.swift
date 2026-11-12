@@ -1,7 +1,6 @@
 import CoreGraphics
 import Foundation
 
-/// Elvis himself: a black sprocker drawn from a pose, facing right, in dog units.
 struct Dog {
     var pose: Pose
     var ears: [Double]

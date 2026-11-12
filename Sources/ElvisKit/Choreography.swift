@@ -1,9 +1,7 @@
 import Foundation
 
-/// Maps an action and the time spent in it to a pose. Pure, so any frame can be rendered on its own.
 public enum Choreography {
     static let tau = 2 * Double.pi
-    /// How far off the ground he dangles while carried, in dog units.
     static let carryHeight = 14.0
 
     public static func pose(for moment: Moment) -> Pose {

@@ -5,8 +5,6 @@ import ImageIO
 import UniformTypeIdentifiers
 
 extension Sheets {
-    /// Collects live frames into contact sheets. Enabled with ELVIS_FILM=<directory>, for checking the running app
-    /// without screen-recording permission.
     final class Film {
         private let directory: String
         private var frames: [Frame] = []

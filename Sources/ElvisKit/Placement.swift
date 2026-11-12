@@ -1,6 +1,5 @@
 import CoreGraphics
 
-/// Where the yard window may rest after Elvis is carried somewhere and put down.
 public enum Placement {
     /// Fits the window inside `screen` and returns the yard x that keeps Elvis under the same point on screen,
     /// as far as the yard's own edges allow.

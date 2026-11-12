@@ -60,7 +60,6 @@ public struct Pose: Equatable, Sendable {
         return p
     }
 
-    /// Lying with the chin on the front paws.
     public static var chinDown: Pose {
         var p = lie
         p.head = CGPoint(x: 17.5, y: 5.6)
@@ -68,7 +67,6 @@ public struct Pose: Equatable, Sendable {
         return p
     }
 
-    /// Flat out with the back legs stretched behind.
     public static var sploot: Pose {
         var p = Pose()
         p.hip = CGPoint(x: -9, y: 5.2)
@@ -154,13 +152,11 @@ extension CGPoint {
     }
 }
 
-/// 0 → 1 with zero slope at both ends.
 func ease(_ t: Double) -> Double {
     let x = min(1, max(0, t))
     return x * x * (3 - 2 * x)
 }
 
-/// Rises from 0 to 1 over `attack`, holds, and falls back over `release` by the end of `duration`.
 func swell(_ t: Double, _ duration: Double, attack: Double = 0.25, release: Double = 0.25) -> Double {
     min(ease(t / attack), ease((duration - t) / release))
 }

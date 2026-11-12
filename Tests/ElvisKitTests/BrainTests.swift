@@ -2,7 +2,6 @@ import Testing
 @testable import ElvisKit
 
 @Suite struct BrainTests {
-    /// Ticks at 30 fps and returns each distinct action in the order it began.
     @discardableResult
     private func run(_ brain: inout Brain, for seconds: Double) -> [Action] {
         var seen: [Action] = []

@@ -168,7 +168,6 @@ public struct Brain: Sendable {
         }
     }
 
-    /// Tells Elvis where the pointer is, in yard units, or nil when it is nowhere near him.
     /// A pointer that is merely parked on top of him is not a stroke, so only a moving one counts.
     public mutating func cursor(at point: (x: Double, y: Double)?) {
         if let point, let last = world.cursor, abs(point.x - last.x) + abs(point.y - last.y) > 0.5 {
@@ -184,14 +183,12 @@ public struct Brain: Sendable {
         }
     }
 
-    /// A click on him: a quick fuss, unless he is in the middle of something.
     public mutating func pat() {
         guard !reacting, !isMoving else { return }
         queue = []
         start(Step(action.isAsleep ? .sleepWag : .petted, 1.8))
     }
 
-    /// Lifts him off the ground. He stays held, whatever Claude does, until `putDown`.
     public mutating func pickUp() {
         guard action != .held else { return }
         dropBallIfCarried()
@@ -336,7 +333,6 @@ public struct Brain: Sendable {
         }
     }
 
-    /// Moves toward `target` and reports arrival.
     private mutating func step(toward target: Double, speed: Double, dt: Double) -> Bool {
         let gap = target - world.x
         if abs(gap) > 0.01 { world.facing = gap > 0 ? 1 : -1 }

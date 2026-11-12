@@ -1,6 +1,5 @@
 import Foundation
 
-/// What survives a restart: the day's mud and the two menu choices.
 struct Keepsakes: Codable {
     var sounds = true
     var leftCorner = false

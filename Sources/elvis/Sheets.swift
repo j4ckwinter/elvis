@@ -4,7 +4,6 @@ import Foundation
 import ImageIO
 import UniformTypeIdentifiers
 
-/// Renders poses to PNG contact sheets, so the drawing can be checked without watching the live window.
 enum Sheets {
     struct Cell {
         var label: String

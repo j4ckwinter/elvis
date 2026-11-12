@@ -9,7 +9,6 @@ func ownPath() -> String {
     return Bundle.main.executablePath ?? given
 }
 
-/// Starts the app in the background and waits briefly for it to start listening.
 func wake() -> Bool {
     if EventSocket.isSomeoneListening { return true }
     let process = Process()

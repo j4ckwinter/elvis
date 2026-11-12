@@ -1,6 +1,5 @@
 import AVFoundation
 
-/// One soft, synthesised spaniel whine. Nothing is loaded from disk.
 final class Whine {
     private let engine = AVAudioEngine()
     private let player = AVAudioPlayerNode()

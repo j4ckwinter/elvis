@@ -12,7 +12,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var lastTick = ProcessInfo.processInfo.systemUptime
     private var lastSave = ProcessInfo.processInfo.systemUptime
     private var ticksPerSecond = 30.0
-    /// Where the button went down on him, until it comes up again.
     private var pressedAt: NSPoint?
     /// The pointer's offset from the window's origin while Elvis is being carried.
     private var grip: NSPoint?
@@ -83,7 +82,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         window.setFrame(NSRect(origin: NSPoint(x: x, y: ground.minY), size: size), display: true)
     }
 
-    /// The part of a screen the yard may occupy: clear of the menu bar, with its ground line just above the Dock.
     private func floor(of screen: NSScreen) -> NSRect {
         let visible = screen.visibleFrame
         let bottom = max(screen.frame.minY, visible.minY - 4)
@@ -101,7 +99,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         pressedAt = NSEvent.mouseLocation
     }
 
-    /// A press only becomes a lift once the pointer moves, so that a plain click stays a pat.
     private func drag() {
         let mouse = NSEvent.mouseLocation
         if grip == nil, let start = pressedAt, hypot(mouse.x - start.x, mouse.y - start.y) > 3 {

@@ -1,7 +1,6 @@
 import CoreGraphics
 import Foundation
 
-/// Turns brain moments into frames: blends between actions, swings the ears, blinks, and scatters particles.
 public struct Stage: Sendable {
     private struct Pendulum: Sendable {
         var angle = 0.0
@@ -119,7 +118,6 @@ public struct Stage: Sendable {
         if pose.front < 0.5 { pose.pitch += max(-0.2, min(0.3, dy / 120)) }
     }
 
-    /// Returns the sideways and upward push the head's movement puts on anything hanging from him.
     private mutating func headMotion(to head: CGPoint, dt: Double) -> CGPoint {
         guard dt > 0 else { return .zero }
         if let last = headAt {
@@ -149,7 +147,6 @@ public struct Stage: Sendable {
         }
     }
 
-    /// Swings everything below the scruff, which is where he is held.
     private func hang(_ pose: inout Pose, at angle: Double) {
         pose.hip = pose.shoulder + (pose.hip - pose.shoulder).rotated(angle)
         pose.paws = pose.paws.map { pose.shoulder + ($0 - pose.shoulder).rotated(angle) }

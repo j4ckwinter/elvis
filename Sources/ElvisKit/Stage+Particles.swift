@@ -2,7 +2,6 @@ import CoreGraphics
 import Foundation
 
 extension Stage {
-    /// Shows the whine as well as playing it.
     public mutating func showWhine(at m: Moment) {
         let pose = shown
         let mouth = mouthPoint(pose, x: m.world.x, scale: facing)

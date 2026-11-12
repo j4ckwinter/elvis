@@ -11,7 +11,6 @@ public struct Particle: Sendable {
     public var muddy = false
 }
 
-/// What the painter draws for one frame.
 public struct Frame: Sendable {
     public var pose = Pose()
     public var action = Action.sit

@@ -1,4 +1,3 @@
-/// What Elvis finds to do when nothing has called for a reaction.
 extension Brain {
     mutating func chooseNext() -> [Step] {
         if hovering, pettedThisHover, mode != .waiting || abs(world.x - Yard.doorSpot) < 2 {

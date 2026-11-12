@@ -17,7 +17,6 @@ final class YardView: NSView {
     override func mouseDragged(with event: NSEvent) { onDrag() }
     override func mouseUp(with event: NSEvent) { onRelease() }
 
-    /// Repaints only the patch the new frame and the previous one touch.
     func show(_ frame: Frame) {
         frameToDraw = frame
         let area = Painter.bounds(of: frame)

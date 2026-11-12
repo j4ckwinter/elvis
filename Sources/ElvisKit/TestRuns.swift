@@ -1,14 +1,10 @@
 import Foundation
 
-/// Decides whether a shell command was a test run and, if so, how it went.
 public enum TestRuns {
     public enum Verdict: Equatable, Sendable {
         case passed, failed
     }
 
-    /// - Parameters:
-    ///   - exitStatus: the status the shell reported for the whole command.
-    ///   - output: combined output when available. It decides when a pipe or a later command hides the runner's own status.
     public static func verdict(command: String, exitStatus: Int, output: String?) -> Verdict? {
         guard let run = testSegment(in: command) else { return nil }
         if run.statusIsMasked { return output.flatMap(verdict(fromOutput:)) }
@@ -23,7 +19,6 @@ public enum TestRuns {
     }
 
     struct Segment {
-        /// True when something after the runner (a pipe, `|| true`, `; echo`) decides the exit status instead.
         var statusIsMasked: Bool
     }
 

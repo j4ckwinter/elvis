@@ -1,6 +1,5 @@
 import Foundation
 
-/// Reduces a Claude Code hook payload (the JSON a hook receives on stdin) to a `WorkEvent`.
 /// Field names follow https://code.claude.com/docs/en/hooks.md as read on 2026-11-12.
 public enum ClaudeHooks {
     public static func event(fromPayload payload: Data) -> WorkEvent? {

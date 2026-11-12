@@ -8,7 +8,6 @@ public enum Yard {
     public static let leftEdge = 24.0
     public static let rightEdge = 184.0
     public static let door = 214.0
-    /// Where Elvis sits to wait at the door.
     public static let doorSpot = 180.0
     public static let gravity = 260.0
 }

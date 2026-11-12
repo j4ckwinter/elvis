@@ -1,5 +1,4 @@
 extension Brain {
-    /// A line for the menu: what Elvis thinks he is doing.
     public var caption: String {
         switch action {
         case .sleep, .sleepSigh: return "fast asleep"

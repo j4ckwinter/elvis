@@ -22,7 +22,6 @@ import Testing
         }
     }
 
-    /// Paints a frame onto a clear yard and counts the solid pixels, and the pixels outside the frame's declared bounds.
     static func paint(_ frame: Frame) throws -> (opaque: Int, strays: Int) {
         let unit = 2.0
         let width = Int(Yard.width * unit), height = Int((Yard.height + Painter.groundMargin) * unit)

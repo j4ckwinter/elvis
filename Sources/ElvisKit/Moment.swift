@@ -1,4 +1,3 @@
-/// Everything the animator needs to know about one instant of the brain.
 public struct Moment: Sendable {
     public var action: Action
     public var elapsed: Double

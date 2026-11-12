@@ -3,7 +3,6 @@ import Foundation
 
 /// Draws a frame. The context's origin is the yard's bottom-left corner with y pointing up, in points.
 public enum Painter {
-    /// Space below ground level, in dog units, for shadows and trailing ears.
     public static let groundMargin = 6.0
 
     public static func draw(_ frame: Frame, in ctx: CGContext, unit: Double) {
@@ -54,7 +53,6 @@ public enum Painter {
         return area
     }
 
-    /// The box around Elvis himself in this frame, in dog units, for telling whether the pointer is on him.
     public static func body(of frame: Frame) -> CGRect {
         let pose = frame.pose
         let xs = pose.paws.map(\.x) + [pose.hip.x - 7, pose.shoulder.x + 7, pose.head.x - 8, pose.head.x + 8]
