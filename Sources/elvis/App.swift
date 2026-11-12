@@ -12,7 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var lastTick = ProcessInfo.processInfo.systemUptime
     private var lastSave = ProcessInfo.processInfo.systemUptime
     private var ticksPerSecond = 30.0
-    private var gesture = PickUpGesture()
+    private var carrying: Carrying?
     private var statusMenu: StatusMenu?
     private let film = ProcessInfo.processInfo.environment["ELVIS_FILM"].map(Sheets.Film.init(directory:))
     private var lastFilmed = 0.0
@@ -50,12 +50,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
         window.colorSpace = .sRGB
         window.contentView = view
-        view.onPress = { [weak self] in self?.press() }
-        view.onDrag = { [weak self] in self?.drag() }
-        view.onRelease = { [weak self] in self?.releaseButton() }
         view.wantsLayer = true
         view.layer?.contentsFormat = .RGBA8Uint
         self.window = window
+        carrying = makeCarrying(in: window)
         placeWindow()
         window.orderFrontRegardless()
         NotificationCenter.default.addObserver(
@@ -74,86 +72,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let spot = keepsakes.spot {
             let wanted = NSRect(origin: NSPoint(x: spot.x, y: spot.y), size: size)
             if let screen = NSScreen.screens.first(where: { $0.frame.intersects(wanted) }) {
-                let settled = Placement.settle(window: wanted, dogX: brain.world.x, unit: YardView.unit, within: floor(of: screen))
+                let settled = Placement.settle(window: wanted, dogX: brain.world.x, unit: YardView.unit, within: screen.floor)
                 window.setFrame(NSRect(origin: settled.origin, size: size), display: true)
                 return
             }
         }
-        let ground = floor(of: home)
+        let ground = home.floor
         let x = keepsakes.leftCorner ? ground.minX + 8 : ground.maxX - size.width - 8
         window.setFrame(NSRect(origin: NSPoint(x: x, y: ground.minY), size: size), display: true)
-    }
-
-    private func floor(of screen: NSScreen) -> NSRect {
-        let visible = screen.visibleFrame
-        let bottom = max(screen.frame.minY, visible.minY - 4)
-        return NSRect(x: visible.minX, y: bottom, width: visible.width, height: visible.maxY - bottom)
-    }
-
-    private func pointerIsOverElvis() -> Bool {
-        guard let pointer = cursorInYard() else { return false }
-        return Painter.body(of: view.frameToDraw).contains(CGPoint(x: pointer.x, y: pointer.y))
-    }
-
-    // The window starts catching clicks a tick after the pointer reaches him, so the press is checked again here.
-    private func press() {
-        gesture.press(onElvis: pointerIsOverElvis(), at: NSEvent.mouseLocation)
-    }
-
-    private func drag() {
-        guard let window else { return }
-        switch gesture.drag(to: NSEvent.mouseLocation, windowOrigin: window.frame.origin) {
-        case .lifted(let origin):
-            brain.pickUp()
-            if ticksPerSecond < 30 { schedule(rate: 30) }
-            window.setFrameOrigin(origin)
-        case .carried(let origin):
-            window.setFrameOrigin(origin)
-        case nil:
-            break
-        }
-    }
-
-    private func releaseButton() {
-        finish(gesture.release())
-    }
-
-    private func releaseIfButtonCameUpUnseen() {
-        guard gesture.isPressed else { return }
-        finish(gesture.releaseIfButtonCameUpUnseen(buttonIsDown: NSEvent.pressedMouseButtons & 1 != 0))
-    }
-
-    private func finish(_ release: PickUpGesture.Release?) {
-        switch release {
-        case .pat:
-            brain.pat()
-            if ticksPerSecond < 30 { schedule(rate: 30) }
-        case .putDown:
-            putDown()
-        case nil:
-            break
-        }
-    }
-
-    private func putDown() {
-        guard let window else { return }
-        let mouse = NSEvent.mouseLocation
-        let screen = NSScreen.screens.first { $0.frame.contains(mouse) } ?? window.screen ?? NSScreen.screens.first
-        guard let screen else { return }
-        let settled = Placement.settle(window: window.frame, dogX: brain.world.x, unit: YardView.unit, within: floor(of: screen))
-        window.setFrameOrigin(settled.origin)
-        brain.putDown(at: settled.dogX)
-        keepsakes.spot = Keepsakes.Spot(x: settled.origin.x, y: settled.origin.y)
-        keepsakes.save()
-    }
-
-    private func cursorInYard() -> (x: Double, y: Double)? {
-        guard let frame = window?.frame else { return nil }
-        let mouse = NSEvent.mouseLocation
-        let x = (mouse.x - frame.minX) / YardView.unit
-        let y = (mouse.y - frame.minY) / YardView.unit - Painter.groundMargin
-        guard x > -50, x < Yard.width + 50, y > -12, y < Yard.height + 60 else { return nil }
-        return (x, y)
     }
 
     private func schedule(rate: Double) {
@@ -170,15 +96,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let dt = min(0.25, max(0, now - lastTick))
         lastTick = now
 
-        brain.cursor(at: cursorInYard())
+        brain.cursor(at: view.pointerInYard())
         brain.tick(dt)
         for cue in brain.drainCues() where cue == .whine {
             stage.showWhine(at: brain.moment)
             if keepsakes.sounds { whine.play() }
         }
-        releaseIfButtonCameUpUnseen()
-        let catchClicks = gesture.isPressed || pointerIsOverElvis()
-        if let window, window.ignoresMouseEvents == catchClicks { window.ignoresMouseEvents = !catchClicks }
+        carrying?.tick()
         let corner = window?.frame.origin ?? .zero
         let yardOrigin = CGPoint(x: corner.x / YardView.unit, y: corner.y / YardView.unit)
         view.show(stage.advance(brain.moment, dt: dt, yardOrigin: yardOrigin))
@@ -208,11 +132,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         brain.handle(event)
+        runAtFullRate()
+    }
+
+    private func runAtFullRate() {
         if ticksPerSecond < 30 { schedule(rate: 30) }
     }
 
     private func remember() {
         keepsakes.mud = brain.world.mud
+        keepsakes.save()
+    }
+
+    private func makeCarrying(in window: NSWindow) -> Carrying {
+        Carrying(
+            window: window, view: view,
+            elvis: Carrying.Elvis(
+                x: { [unowned self] in self.brain.world.x },
+                pickUp: { [weak self] in self?.pickUp() },
+                pat: { [weak self] in self?.pat() },
+                putDown: { [weak self] x in self?.brain.putDown(at: x) }),
+            rememberSpot: { [weak self] origin in self?.remember(spot: origin) })
+    }
+
+    private func pickUp() {
+        brain.pickUp()
+        runAtFullRate()
+    }
+
+    private func pat() {
+        brain.pat()
+        runAtFullRate()
+    }
+
+    private func remember(spot origin: CGPoint) {
+        keepsakes.spot = Keepsakes.Spot(x: origin.x, y: origin.y)
         keepsakes.save()
     }
 
