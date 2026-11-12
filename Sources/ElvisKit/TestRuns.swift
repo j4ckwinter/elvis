@@ -179,14 +179,8 @@ public enum TestRuns {
     }
 
     static func verdict(fromOutput output: String) -> Verdict? {
-        let text = "\n" + output.lowercased() + "\n"
-        let strongMarks = [
-            "\nfail ", "\n fail ", "\nfail\t", "\nfail:", "\nfail\n", "--- fail", "✗", "✘", "\nnot ok ", "test failed", "tests failed",
-        ]
-        if matches(text, #"\b[1-9]\d*\s+(failed|failing|failures?)\b"#) || matches(text, #"\b(failed|failures?|errors?)\s*[:=]\s*[1-9]"#)
-            || strongMarks.contains(where: text.contains) {
-            return .failed
-        }
+        if reportsFailedTests(output) { return .failed }
+        let text = searchable(output)
         let weakMarks = ["assertionerror", "panicked at", "build failed", "traceback (most recent", "npm err!"]
         let passMarks = [
             " passed", "\nok ", "\nok\t", "\npass", "✓", "✔", "all tests passed", "0 failed", "0 failures", "test result: ok",
@@ -196,6 +190,19 @@ public enum TestRuns {
         let passed = passMarks.contains(where: text.contains) || matches(text, #"\b(failed|failures?)\s*[:=]\s*0\b"#)
         if troubled { return passed ? nil : .failed }
         return passed ? .passed : nil
+    }
+
+    static func reportsFailedTests(_ output: String) -> Bool {
+        let text = searchable(output)
+        let marks = [
+            "\nfail ", "\n fail ", "\nfail\t", "\nfail:", "\nfail\n", "--- fail", "✗", "✘", "\nnot ok ", "test failed", "tests failed",
+        ]
+        return matches(text, #"\b[1-9]\d*\s+(failed|failing|failures?)\b"#) || matches(text, #"\b(failed|failures?|errors?)\s*[:=]\s*[1-9]"#)
+            || marks.contains(where: text.contains)
+    }
+
+    private static func searchable(_ output: String) -> String {
+        "\n" + output.lowercased() + "\n"
     }
 
     private static func matches(_ text: String, _ pattern: String) -> Bool {
