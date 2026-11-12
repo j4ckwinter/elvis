@@ -1,7 +1,7 @@
 import AppKit
 import ElvisKit
 
-final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate {
     private var brain = Brain(seed: UInt64(Date().timeIntervalSince1970 * 1000))
     private var stage = Stage(seed: UInt64(Date().timeIntervalSince1970))
     private var keepsakes = Keepsakes.load()
@@ -13,10 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var lastSave = ProcessInfo.processInfo.systemUptime
     private var ticksPerSecond = 30.0
     private var gesture = PickUpGesture()
-    private var statusItem: NSStatusItem!
-    private let captionItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
-    private let soundsItem = NSMenuItem(title: "Sounds", action: #selector(toggleSounds), keyEquivalent: "")
-    private let cornerItem = NSMenuItem(title: "", action: #selector(switchCorner), keyEquivalent: "")
+    private var statusMenu: StatusMenu?
     private let film = ProcessInfo.processInfo.environment["ELVIS_FILM"].map(Sheets.Film.init(directory:))
     private var lastFilmed = 0.0
     private let isHeadless = ProcessInfo.processInfo.environment["ELVIS_HEADLESS"] != nil
@@ -31,7 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         if !isHeadless {
             openYard()
-            buildMenu()
+            statusMenu = makeStatusMenu()
         }
         do {
             try EventSocket.listen { [weak self] event in self?.receive(event) }
@@ -219,49 +216,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         keepsakes.save()
     }
 
-    private func buildMenu() {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        if let image = NSImage(systemSymbolName: "pawprint.fill", accessibilityDescription: "Elvis") {
-            statusItem.button?.image = image
-        } else {
-            statusItem.button?.title = "🐾"
-        }
-        let menu = NSMenu()
-        menu.delegate = self
-        captionItem.isEnabled = false
-        menu.addItem(captionItem)
-        menu.addItem(.separator())
-        menu.addItem(withTitle: "Throw the Ball", action: #selector(throwBall), keyEquivalent: "").target = self
-        soundsItem.target = self
-        menu.addItem(soundsItem)
-        cornerItem.target = self
-        menu.addItem(cornerItem)
-        menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit Elvis", action: #selector(quit), keyEquivalent: "").target = self
-        statusItem.menu = menu
+    private func makeStatusMenu() -> StatusMenu {
+        StatusMenu(
+            status: { [unowned self] in
+                StatusMenu.Status(
+                    caption: self.brain.caption, soundsAreOn: self.keepsakes.sounds, isInHisCorner: self.keepsakes.spot == nil)
+            },
+            choices: StatusMenu.Choices(
+                throwBall: { [weak self] in self?.receive(WorkEvent(.throwBall)) },
+                toggleSounds: { [weak self] in self?.toggleSounds() },
+                switchCorner: { [weak self] in self?.switchCorner() },
+                quit: { NSApp.terminate(nil) }))
     }
 
-    func menuWillOpen(_ menu: NSMenu) {
-        captionItem.title = "Elvis: \(brain.caption)"
-        soundsItem.state = keepsakes.sounds ? .on : .off
-        cornerItem.title = keepsakes.spot == nil ? "Move to the Other Corner" : "Back to His Corner"
-    }
-
-    @objc private func throwBall() { receive(WorkEvent(.throwBall)) }
-
-    @objc private func toggleSounds() {
+    private func toggleSounds() {
         keepsakes.sounds.toggle()
         keepsakes.save()
     }
 
-    @objc private func switchCorner() {
+    private func switchCorner() {
         if keepsakes.spot == nil { keepsakes.leftCorner.toggle() }
         keepsakes.spot = nil
         keepsakes.save()
         placeWindow()
     }
-
-    @objc private func quit() { NSApp.terminate(nil) }
 }
 
 enum ElvisApp {
