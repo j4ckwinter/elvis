@@ -50,6 +50,8 @@ claude plugin marketplace add j4ckwinter/elvis#release
 claude plugin install elvis@elvis
 ```
 
+After a plugin update, choose **Quit Elvis** from the paw menu. The next session wakes the new build; until then the Elvis on screen is the old one, and he ignores events he does not know.
+
 The `main` branch carries no binary. Installed from there, the hooks do nothing until you run `make`. Each [release](https://github.com/j4ckwinter/elvis/releases) also has the binary as a zip, for running `elvis demo` and the other commands by hand. macOS quarantines a browser download; clear it with `xattr -d com.apple.quarantine elvis`.
 
 Once the plugin is loaded, starting or resuming a Claude Code session wakes Elvis if he is not already running. That includes headless `claude -p` runs. Set `ELVIS_AUTOSTART=0` to stop that.

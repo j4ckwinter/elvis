@@ -19,7 +19,10 @@ jobs:
         run: |
           test "$(lipo -archs plugin/bin/elvis | tr ' ' '\n' | sort | xargs)" = "arm64 x86_64"
           codesign --verify --all-architectures plugin/bin/elvis
-          test -z "$(ELVIS_HOME="$(mktemp -d)" ELVIS_AUTOSTART=0 plugin/bin/elvis hook < /dev/null 2>&1)"
+          for payload in '{"hook_event_name":"UserPromptSubmit","session_id":"s"}' 'not json' ''; do
+            said=$(printf '%s' "$payload" | ELVIS_HOME="$(mktemp -d)" ELVIS_AUTOSTART=0 plugin/bin/elvis hook 2>&1)
+            test -z "$said"
+          done
       - name: Publish the plugin with its binary on the release branch
         env:
           GIT_AUTHOR_NAME: github-actions[bot]
@@ -32,4 +35,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           zip -j "elvis-$GITHUB_REF_NAME-macos.zip" plugin/bin/elvis
-          gh release create "$GITHUB_REF_NAME" "elvis-$GITHUB_REF_NAME-macos.zip" --title "$GITHUB_REF_NAME" --generate-notes
+          gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1 ||
+            gh release create "$GITHUB_REF_NAME" "elvis-$GITHUB_REF_NAME-macos.zip" --title "$GITHUB_REF_NAME" --generate-notes

@@ -18,7 +18,7 @@ fi
 GIT_INDEX_FILE=$(mktemp -u)
 export GIT_INDEX_FILE
 git read-tree --empty
-git add -f .claude-plugin/marketplace.json plugin/.claude-plugin/plugin.json plugin/hooks/hooks.json plugin/bin/elvis
+git add -f .claude-plugin/marketplace.json plugin
 tree=$(git write-tree)
 rm -f "$GIT_INDEX_FILE"
 unset GIT_INDEX_FILE
@@ -26,6 +26,10 @@ unset GIT_INDEX_FILE
 parent=$(git ls-remote "$remote" "refs/heads/$branch" | cut -f1)
 if [ -n "$parent" ]; then
     git fetch -q "$remote" "$branch"
+    if [ "$(git log -1 --format=%s "$parent")" = "release: $tag" ]; then
+        echo "$tag is already on the $branch branch"
+        exit 0
+    fi
 fi
 commit=$(git commit-tree "$tree" ${parent:+-p "$parent"} -m "release: $tag")
 git push "$remote" "$commit:refs/heads/$branch"
