@@ -57,6 +57,29 @@ final class IsolatedElvis {
     }
 
     @discardableResult
+    func type(_ lines: [String], into shell: String, _ flags: String...) throws -> Outcome {
+        let session = Process()
+        session.executableURL = URL(fileURLWithPath: shell)
+        session.arguments = flags
+        session.environment = environment(autostart: false).merging(["HISTFILE": "/dev/null"]) { $1 }
+        let typed = Pipe(), output = Pipe(), errors = Pipe()
+        try typed.fileHandleForWriting.write(contentsOf: Data((lines + ["exit"]).joined(separator: "\n").appending("\n").utf8))
+        try typed.fileHandleForWriting.close()
+        session.standardInput = typed
+        session.standardOutput = output
+        session.standardError = errors
+        try session.run()
+        guard eventually({ !session.isRunning }) else {
+            session.terminate()
+            session.waitUntilExit()
+            throw StillRunning(arguments: [shell] + flags)
+        }
+        return Outcome(status: session.terminationStatus, output: text(from: output), errors: text(from: errors))
+    }
+
+    var binary: String { Self.builtBinary.path }
+
+    @discardableResult
     func startApp() throws -> Process {
         let app = command(["run"], autostart: false)
         app.standardInput = FileHandle.nullDevice
@@ -68,15 +91,19 @@ final class IsolatedElvis {
     }
 
     private func command(_ arguments: [String], autostart: Bool) -> Process {
+        let command = Process()
+        command.executableURL = Self.builtBinary
+        command.arguments = arguments
+        command.environment = environment(autostart: autostart)
+        return command
+    }
+
+    private func environment(autostart: Bool) -> [String: String] {
         var environment = ProcessInfo.processInfo.environment.filter { !$0.key.hasPrefix("ELVIS_") }
         environment["ELVIS_HOME"] = home
         environment["ELVIS_HEADLESS"] = "1"
         if !autostart { environment["ELVIS_AUTOSTART"] = "0" }
-        let command = Process()
-        command.executableURL = Self.builtBinary
-        command.arguments = arguments
-        command.environment = environment
-        return command
+        return environment
     }
 
     private func text(from pipe: Pipe) -> String {

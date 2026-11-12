@@ -8,6 +8,18 @@ import Testing
         elvis = try IsolatedElvis()
     }
 
+    private static let pretendTests = "npm() { [[ $2 != fail ]]; }"
+
+    private func setUp(for shell: String) -> String {
+        "eval \"$('\(elvis.binary)' shell-init \(shell))\""
+    }
+
+    @Test func zshReportsTheTestRunsYouTypeAndNothingForAnEmptyLine() throws {
+        let listener = try UnixSocket.Listener(at: elvis.socket)
+        try elvis.type([setUp(for: "zsh"), Self.pretendTests, "npm test", "", "npm test fail", "cd /tmp && npm test", "ls > /dev/null"], into: "/bin/zsh", "-f", "-i")
+        #expect(listener.kindsDelivered(expecting: 3) == ["tests-passed", "tests-failed", "tests-passed"])
+    }
+
     @Test func aPassingTestRunIsReported() throws {
         let listener = try UnixSocket.Listener(at: elvis.socket)
         try elvis.run("ran", "0", "npm test")

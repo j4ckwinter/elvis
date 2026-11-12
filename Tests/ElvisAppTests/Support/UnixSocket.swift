@@ -59,6 +59,19 @@ enum UnixSocket {
             return String(decoding: delivered, as: UTF8.self).split(separator: "\n").map(String.init)
         }
 
+        func kindsDelivered(expecting count: Int) -> [String] {
+            var lines: [String] = []
+            _ = eventually(within: 3) {
+                lines += linesDelivered()
+                return lines.count >= count
+            }
+            usleep(200_000)
+            lines += linesDelivered()
+            return lines.compactMap { line in
+                (try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: String])?["kind"]
+            }
+        }
+
         private func everything(sentOver connection: Int32) -> Data {
             var sent = Data()
             var buffer = [UInt8](repeating: 0, count: 4096)
