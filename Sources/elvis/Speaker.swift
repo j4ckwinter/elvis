@@ -23,7 +23,7 @@ final class Speaker {
         } catch {
             return
         }
-        player.scheduleBuffer(buffer, at: nil, options: [])
+        player.scheduleBuffer(buffer, at: nil, options: .interrupts)
         player.play()
         stopWork?.cancel()
         let work = DispatchWorkItem { [weak self] in

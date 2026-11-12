@@ -50,7 +50,7 @@ Once the plugin is loaded, starting or resuming a Claude Code session wakes Elvi
 | Claude runs a command | Points at it, one paw up |
 | Claude searches the web | Sniffs the air |
 | Tests fail | Sits, ears down, and whines softly, at most once every 90 seconds |
-| Tests pass | Chases a ball, trots it back, and sits there looking proud. One fetch per 45 seconds; otherwise a wag |
+| Tests pass | Chases a ball, trots it back, and sits there looking proud. One fetch per 45 seconds; otherwise a wag. A pass straight after a failure gets a spin and a yip first |
 | Claude commits | Buries a bone where it will be safe. One bone per 20 seconds |
 | Claude pushes | Barks twice to tell the whole street. One bark a minute; otherwise a wag |
 | Claude needs your approval or an answer | Goes to the door, sits, and stares at you. He tilts his head, paws the door, and after a couple of minutes lies down with his chin on the floor. He stays silent while he waits |

@@ -148,6 +148,16 @@ import Testing
         #expect(brain.action == .wagAtYou, "a second pass straight away is a wag, not another fetch")
     }
 
+    @Test func goingFromRedToGreenEarnsAYip() {
+        var brain = working()
+        brain.handle(WorkEvent(.testsFailed, session: "s"))
+        #expect(brain.drainCues() == [.whine])
+        run(&brain, for: 6)
+        brain.handle(WorkEvent(.testsPassed, session: "s"))
+        #expect(brain.action == .spin)
+        #expect(brain.drainCues() == [.yip])
+    }
+
     @Test func buriesABoneWhenWorkIsCommitted() {
         var brain = working()
         let mudBefore = brain.world.mud

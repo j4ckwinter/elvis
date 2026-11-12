@@ -2,7 +2,7 @@ import Foundation
 
 public struct Brain: Sendable {
     public enum Mode: Equatable, Sendable { case calm, working, waiting }
-    public enum Cue: Equatable, Sendable { case whine, bark }
+    public enum Cue: Equatable, Sendable { case whine, bark, yip }
 
     public struct Tuning: Sendable {
         public var longRun = 120.0
@@ -395,7 +395,11 @@ public struct Brain: Sendable {
     }
 
     private static func cue(startedBy action: Action) -> Cue? {
-        action == .bark ? .bark : nil
+        switch action {
+        case .bark: return .bark
+        case .spin: return .yip
+        default: return nil
+        }
     }
 
     mutating func chance(_ probability: Double) -> Bool {

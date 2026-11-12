@@ -98,8 +98,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         brain.cursor(at: view.pointerInYard())
         brain.tick(dt)
-        for cue in brain.drainCues() where cue == .whine {
-            stage.showWhine(at: brain.moment)
+        for cue in brain.drainCues() {
+            if cue == .whine { stage.showWhine(at: brain.moment) }
             if keepsakes.sounds { speaker.play(cue) }
         }
         carrying?.tick()
