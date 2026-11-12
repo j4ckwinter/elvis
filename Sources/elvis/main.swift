@@ -71,11 +71,7 @@ case "tell":
 case "ran":
     guard arguments.count > 2, let status = Int(arguments[1]) else { exit(0) }
     let command = arguments[2...].joined(separator: " ")
-    switch TestRuns.verdict(command: command, exitStatus: status, output: nil) {
-    case .passed: EventSocket.send(WorkEvent(.testsPassed))
-    case .failed: EventSocket.send(WorkEvent(.testsFailed))
-    case nil: break
-    }
+    if let news = ShellNews.kind(ofCommand: command, exitStatus: status, output: nil) { EventSocket.send(WorkEvent(news)) }
 
 case "shell-init":
     guard arguments.dropFirst().first == "zsh" else { fail("only zsh is supported: elvis shell-init zsh") }

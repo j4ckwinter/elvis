@@ -36,7 +36,7 @@ public enum ClaudeHooks {
         case "PostToolUse":
             let response = object["tool_response"] as? [String: Any]
             let cutShort = response?["interrupted"] as? Bool == true || response?["backgroundTaskId"] != nil
-            let kind = cutShort ? nil : shellTestVerdict(tool: tool, input: input, exitStatus: 0, output: output(of: object["tool_response"]))
+            let kind = cutShort ? nil : shellNews(tool: tool, input: input, exitStatus: 0, output: output(of: object["tool_response"]))
             return WorkEvent(kind ?? .toolFinished, session: session, subject: subject, agent: agent)
         case "PostToolUseFailure":
             let error = object["error"] as? String ?? ""
@@ -44,7 +44,7 @@ public enum ClaudeHooks {
             guard !interrupted, let status = exitStatus(ofCommandThatRan: error) else {
                 return WorkEvent(.toolFinished, session: session, subject: subject, agent: agent)
             }
-            let kind = shellTestVerdict(tool: tool, input: input, exitStatus: status, output: error)
+            let kind = shellNews(tool: tool, input: input, exitStatus: status, output: error)
             return WorkEvent(kind ?? .toolFinished, session: session, subject: subject, agent: agent)
         case "Stop":
             return WorkEvent(.taskFinished, session: session)
@@ -62,14 +62,10 @@ public enum ClaudeHooks {
         "permission_prompt", "elicitation_dialog", "elicitation_url_dialog", "agent_needs_input",
     ]
 
-    private static func shellTestVerdict(tool: String, input: [String: Any], exitStatus: Int, output: String?) -> WorkEvent.Kind? {
+    private static func shellNews(tool: String, input: [String: Any], exitStatus: Int, output: String?) -> WorkEvent.Kind? {
         guard tool == "Bash" || tool == "PowerShell", let command = input["command"] as? String else { return nil }
         if input["run_in_background"] as? Bool == true { return nil }
-        switch TestRuns.verdict(command: command, exitStatus: exitStatus, output: output) {
-        case .passed: return .testsPassed
-        case .failed: return .testsFailed
-        case nil: return nil
-        }
+        return ShellNews.kind(ofCommand: command, exitStatus: exitStatus, output: output)
     }
 
     private static func exitStatus(ofCommandThatRan error: String) -> Int? {
