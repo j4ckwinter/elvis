@@ -44,6 +44,7 @@ public enum Choreography {
         case .sniffAir: return sniffAir(elapsed: elapsed, length: length)
         case .checkIn: return checkIn(elapsed: elapsed, oddSerial: oddSerial)
         case .pant: return pant(elapsed: elapsed)
+        case .listen: return listen(elapsed: elapsed, length: length)
 
         case .startle: return startle(elapsed: elapsed, length: length)
         case .boundUp: return boundUp(elapsed: elapsed, length: length)

@@ -174,7 +174,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         StatusMenu(
             status: { [unowned self] in
                 StatusMenu.Status(
-                    caption: self.brain.caption, soundsAreOn: self.keepsakes.sounds, isInHisCorner: self.keepsakes.spot == nil)
+                    caption: self.brain.caption, company: self.brain.company, soundsAreOn: self.keepsakes.sounds, isInHisCorner: self.keepsakes.spot == nil)
             },
             choices: StatusMenu.Choices(
                 throwBall: { [weak self] in self?.receive(WorkEvent(.throwBall)) },

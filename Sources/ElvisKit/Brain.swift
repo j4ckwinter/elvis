@@ -63,6 +63,7 @@ public struct Brain: Sendable {
     }
 
     public var mode: Mode { sessions.mode }
+    var tally: Sessions.Tally { sessions.tally }
 
     public var moment: Moment {
         Moment(action: action, elapsed: elapsed, length: duration, serial: actionSerial, world: world, mode: mode, now: now)
@@ -135,7 +136,9 @@ public struct Brain: Sendable {
             finish(after: change.runLength)
         case .taskStumbled:
             if after == .calm { react([Step(.confused, 2.6)], append: reacting) }
-        case .needsYou, .sessionIdle, .sessionEnded, .quit:
+        case .helperStarted:
+            if change.firstHelperWentOut, after == .working, !reacting { react([Step(.listen, 1.8)]) }
+        case .helperFinished, .needsYou, .sessionIdle, .sessionEnded, .quit:
             break
         }
     }

@@ -85,6 +85,30 @@
         ]
       }
     ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/elvis\" hook 2>/dev/null || true",
+            "async": true,
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/elvis\" hook 2>/dev/null || true",
+            "async": true,
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "Notification": [
       {
         "hooks": [

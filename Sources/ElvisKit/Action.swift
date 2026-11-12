@@ -19,7 +19,7 @@ public enum Action: Equatable, Sendable {
     case doze, rest, sigh, earFlap
     case sit, lookAround, wagAtYou, scratch, sneeze, yawn, stretch, circle, chaseTail, dizzy, shake, petted, nudgeBall
     case go(to: Double, gait: Gait)
-    case sniffSpot, dig, point, sniffAir, checkIn, pant
+    case sniffSpot, dig, point, sniffAir, checkIn, pant, listen
     case startle, boundUp, droop, spin, confused, buryBone, bark
     case watchBall, chaseBall, skid, grabBall, dropBall, proudSit
     case flop

@@ -6,6 +6,8 @@ public struct WorkEvent: Codable, Equatable, Sendable {
         case taskStarted = "task-started"
         case toolStarted = "tool-started"
         case toolFinished = "tool-finished"
+        case helperStarted = "helper-started"
+        case helperFinished = "helper-finished"
         case needsYou = "needs-you"
         case youAnswered = "you-answered"
         case testsPassed = "tests-passed"

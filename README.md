@@ -11,14 +11,14 @@ Requires macOS 14 or later and the Swift toolchain (Xcode or Command Line Tools)
 ```sh
 make            # builds .build/release/elvis and copies it to plugin/bin/elvis
 plugin/bin/elvis start
-plugin/bin/elvis demo     # walks through his reactions, about 80 seconds
+plugin/bin/elvis demo     # walks through his reactions, about 85 seconds
 ```
 
 `make install` also copies the binary to `~/.local/bin/elvis`.
 
 Press on Elvis and drag to pick him up, carry him anywhere on any display, and let go to put him down. He lives there until you move him again. A click without a drag is a pat. **Back to His Corner** in the menu sends him home.
 
-The paw print in the menu bar says what he thinks he is doing, throws a ball, turns sounds off, moves him between corners, and quits.
+The paw print in the menu bar says what he thinks he is doing, counts the Claude Code sessions that are working or waiting for you and the subagents they have out, throws a ball, turns sounds off, moves him between corners, and quits.
 
 ## Connect him to Claude Code
 
@@ -49,6 +49,7 @@ Once the plugin is loaded, starting or resuming a Claude Code session wakes Elvi
 | Claude edits files | Digs, which is where the mud comes from |
 | Claude runs a command | Points at it, one paw up |
 | Claude searches the web | Sniffs the air |
+| Claude sends out subagents | Stops and cocks his head one way, then the other. He keeps an ear out for them until they are back |
 | Tests fail | Sits, ears down, and whines softly, at most once every 90 seconds |
 | Tests pass | Chases a ball, trots it back, and sits there looking proud. One fetch per 45 seconds; otherwise a wag. A pass straight after a failure gets a spin and a yip first |
 | Claude commits | Buries a bone where it will be safe. One bone per 20 seconds |
@@ -97,5 +98,6 @@ ELVIS_FILM=/some/dir .build/release/elvis run   # saves contact sheets of the li
 - With "Displays have separate Spaces" on, he may disappear briefly while he is carried across two displays. Not checked.
 - Claude Code reports nothing at the moment you approve a command, so he stays by the door until that command finishes. This is also why he never whines there.
 - When a chain such as `cd app && npm test` fails, he blames the tests only if the output reports failing tests. Tests that fail to compile inside a chain go unremarked.
+- The menu counts sessions and subagents but cannot name them. Project names and paths stay inside the hook.
 - Only `git commit` and `git push` count as saving and sending work. A merge, a rebase, or `gh pr create` goes unremarked.
 - Test detection is a list of known runners. An unusual runner goes unnoticed until it is added to `TestRuns.swift`.

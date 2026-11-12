@@ -99,6 +99,58 @@ import Testing
         #expect(brain.mode == .waiting)
     }
 
+    @Test func pricksUpHisEarsWhenTheFirstHelperGoesOut() {
+        var brain = working()
+        brain.handle(WorkEvent(.helperStarted, session: "s", agent: "a1"))
+        #expect(brain.action == .listen)
+        let serial = brain.actionSerial
+        brain.handle(WorkEvent(.helperStarted, session: "s", agent: "a2"))
+        #expect(brain.actionSerial == serial, "the second helper is no surprise")
+    }
+
+    @Test func keepsAnEarOutOnlyWhileHelpersAreOut() {
+        var brain = working(seed: 4)
+        #expect(!run(&brain, for: 240).contains(.listen))
+        brain.handle(WorkEvent(.helperStarted, session: "s", agent: "a1"))
+        brain.handle(WorkEvent(.toolStarted, session: "s", flavour: .read, agent: "a1"))
+        #expect(run(&brain, for: 240).filter { $0 == .listen }.count >= 3)
+        brain.handle(WorkEvent(.helperFinished, session: "s", agent: "a1"))
+        brain.handle(WorkEvent(.toolStarted, session: "s", flavour: .read))
+        run(&brain, for: 10)
+        #expect(!run(&brain, for: 240).contains(.listen))
+    }
+
+    @Test func theMenuCountsSessionsAndHelpersWithoutNamingThem() {
+        var brain = Brain(seed: 1)
+        #expect(brain.company == nil)
+        brain.handle(WorkEvent(.taskStarted, session: "one"))
+        #expect(brain.company == "1 session working")
+        brain.handle(WorkEvent(.taskStarted, session: "two"))
+        brain.handle(WorkEvent(.taskStarted, session: "three"))
+        brain.handle(WorkEvent(.needsYou, session: "three"))
+        brain.handle(WorkEvent(.helperStarted, session: "one", agent: "a1"))
+        brain.handle(WorkEvent(.helperStarted, session: "one", agent: "a2"))
+        brain.handle(WorkEvent(.helperStarted, session: "two", agent: "b1"))
+        #expect(brain.company == "2 sessions working, 1 waiting for you, 3 helpers out")
+        brain.handle(WorkEvent(.helperFinished, session: "one", agent: "a2"))
+        brain.handle(WorkEvent(.taskFinished, session: "two"))
+        #expect(brain.company == "1 session working, 1 waiting for you, 2 helpers out")
+    }
+
+    @Test func aHelperThatNeverReportsBackIsForgottenWithItsSession() {
+        var ended = working()
+        ended.handle(WorkEvent(.helperStarted, session: "s", agent: "a1"))
+        ended.handle(WorkEvent(.sessionEnded, session: "s"))
+        #expect(ended.company == nil)
+
+        var silent = working()
+        silent.handle(WorkEvent(.helperStarted, session: "s", agent: "a1"))
+        silent.handle(WorkEvent(.taskFinished, session: "s"))
+        #expect(silent.company == "1 helper out", "a helper may carry on in the background after Claude stops")
+        run(&silent, for: 16 * 60)
+        #expect(silent.company == nil)
+    }
+
     @Test func stragglersFromAnEndedSessionAreIgnored() {
         var brain = working()
         brain.handle(WorkEvent(.sessionEnded, session: "s"))

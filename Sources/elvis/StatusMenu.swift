@@ -3,6 +3,7 @@ import AppKit
 final class StatusMenu: NSObject, NSMenuDelegate {
     struct Status {
         var caption: String
+        var company: String?
         var soundsAreOn: Bool
         var isInHisCorner: Bool
     }
@@ -16,6 +17,7 @@ final class StatusMenu: NSObject, NSMenuDelegate {
 
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let captionItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+    private let companyItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let soundsItem = NSMenuItem(title: "Sounds", action: #selector(toggleSounds), keyEquivalent: "")
     private let cornerItem = NSMenuItem(title: "", action: #selector(switchCorner), keyEquivalent: "")
     private let currentStatus: () -> Status
@@ -34,6 +36,8 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         menu.delegate = self
         captionItem.isEnabled = false
         menu.addItem(captionItem)
+        companyItem.isEnabled = false
+        menu.addItem(companyItem)
         menu.addItem(.separator())
         menu.addItem(withTitle: "Throw the Ball", action: #selector(throwBall), keyEquivalent: "").target = self
         soundsItem.target = self
@@ -48,6 +52,8 @@ final class StatusMenu: NSObject, NSMenuDelegate {
     func menuWillOpen(_ menu: NSMenu) {
         let status = currentStatus()
         captionItem.title = "Elvis: \(status.caption)"
+        companyItem.title = "Claude: \(status.company ?? "")"
+        companyItem.isHidden = status.company == nil
         soundsItem.state = status.soundsAreOn ? .on : .off
         cornerItem.title = status.isInHisCorner ? "Move to the Other Corner" : "Back to His Corner"
     }

@@ -23,6 +23,10 @@ public enum ClaudeHooks {
                 return WorkEvent(.needsYou, session: session, subject: subject, agent: agent)
             }
             return WorkEvent(.toolStarted, session: session, flavour: flavour(of: tool), subject: subject, agent: agent)
+        case "SubagentStart", "SubagentStop":
+            let isOneClaudeSentOut = !(object["agent_type"] as? String ?? "").isEmpty
+            guard isOneClaudeSentOut, let agent else { return nil }
+            return WorkEvent(name == "SubagentStart" ? .helperStarted : .helperFinished, session: session, agent: agent)
         case "PermissionRequest":
             return WorkEvent(.needsYou, session: session, subject: subject, agent: agent)
         case "Elicitation":

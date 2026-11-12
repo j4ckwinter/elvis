@@ -36,6 +36,9 @@ extension Brain {
             if roll < 0.04 { return [Step(.chaseTail, 2.2), Step(.startle, 0.5)] }
             if roll < 0.13 { return [Step(.checkIn, 1.9)] }
             if now - modeSince > 25 * 60, roll < 0.2 { return [Step(.pant, 4)] }
+            if tally.helpers > 0, roll > 0.7 {
+                return [Step(.go(to: spot(within: 90), gait: .trot)), Step(.listen, random(1.4, 2.2))]
+            }
         }
         switch recent {
         case .edit:

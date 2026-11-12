@@ -31,6 +31,7 @@ extension Brain {
         case .point: return "pointing at the terminal"
         case .sniffAir: return "smelling the internet"
         case .pant: return "catching his breath"
+        case .listen: return "listening for the helpers"
         case .startle: return "awake! awake"
         case .boundUp: return "ready, so ready"
         case .droop: return "sorry about the tests"
@@ -47,5 +48,14 @@ extension Brain {
         case .held: return "being carried, legs going"
         case .landed: return "back on solid ground"
         }
+    }
+
+    public var company: String? {
+        let counts = tally
+        var parts: [String] = []
+        if counts.working > 0 { parts.append("\(counts.working) \(counts.working == 1 ? "session" : "sessions") working") }
+        if counts.waiting > 0 { parts.append("\(counts.waiting) waiting for you") }
+        if counts.helpers > 0 { parts.append("\(counts.helpers) \(counts.helpers == 1 ? "helper" : "helpers") out") }
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
     }
 }

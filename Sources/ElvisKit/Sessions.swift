@@ -5,6 +5,13 @@ struct Sessions: Sendable {
         var wasWorking: Bool
         var runFinished: Bool
         var runLength: Double?
+        var firstHelperWentOut: Bool
+    }
+
+    struct Tally: Equatable, Sendable {
+        var working = 0
+        var waiting = 0
+        var helpers = 0
     }
 
     private struct Session: Sendable {
@@ -14,6 +21,7 @@ struct Sessions: Sendable {
         var waitingSince = 0.0
         var pending: String?
         var pendingAgent: String?
+        var helpers: Set<String> = []
         var lastEvent = 0.0
 
         mutating func beginWork(at now: Double) {
@@ -32,8 +40,20 @@ struct Sessions: Sendable {
         return states.contains(.waiting) ? .waiting : states.contains(.working) ? .working : .calm
     }
 
+    var tally: Tally {
+        live.values.reduce(into: Tally()) { tally, session in
+            tally.helpers += session.helpers.count
+            switch session.state {
+            case .working: tally.working += 1
+            case .waiting: tally.waiting += 1
+            case .idle: break
+            }
+        }
+    }
+
     mutating func handle(_ event: WorkEvent, now: Double, tuning: Brain.Tuning) -> Change? {
         let before = mode
+        let helpersBefore = tally.helpers
         let wasWorking = live[event.session]?.state == .working
 
         if ended.contains(event.session) {
@@ -51,17 +71,20 @@ struct Sessions: Sendable {
             }
             live[event.session] = event.kind == .sessionEnded ? nil : session
         }
-        return Change(before: before, after: mode, wasWorking: wasWorking, runFinished: runEnd.finished, runLength: runEnd.length)
+        return Change(
+            before: before, after: mode, wasWorking: wasWorking, runFinished: runEnd.finished, runLength: runEnd.length,
+            firstHelperWentOut: helpersBefore == 0 && tally.helpers > 0)
     }
 
     mutating func expireStale(now: Double, tuning: Brain.Tuning) {
         guard now - lastStaleCheck > 5 else { return }
         lastStaleCheck = now
-        for (id, session) in live where session.state != .idle {
+        for (id, session) in live where session.state != .idle || !session.helpers.isEmpty {
             let limit = session.state == .waiting ? tuning.waitingStaleAfter : tuning.staleAfter
             guard now - session.lastEvent > limit else { continue }
             live[id]?.state = .idle
             live[id]?.taskStart = nil
+            live[id]?.helpers = []
         }
     }
 
@@ -86,6 +109,10 @@ struct Sessions: Sendable {
             } else {
                 session.beginWork(at: now)
             }
+        case .helperStarted:
+            if let helper = event.agent { session.helpers.insert(helper) }
+        case .helperFinished:
+            if let helper = event.agent { session.helpers.remove(helper) }
         case .needsYou:
             if session.state != .waiting {
                 session.beginWork(at: now)

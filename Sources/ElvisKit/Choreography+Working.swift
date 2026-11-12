@@ -59,6 +59,19 @@ extension Choreography {
         return p
     }
 
+    static func listen(elapsed t: Double, length d: Double) -> Pose {
+        var p = Pose.stand
+        faceYou(&p)
+        let cocked = ease(t / 0.25) - 2 * ease((t - d / 2) / 0.3)
+        p.tilt = 0.34 * cocked
+        p.head.y += 1.2
+        p.earLift = 1
+        p.eyes = 1.2
+        p.brow = 0.5
+        p.tail = 0.55
+        return p
+    }
+
     static func pant(elapsed t: Double) -> Pose {
         var p = Pose.sit
         faceYou(&p)

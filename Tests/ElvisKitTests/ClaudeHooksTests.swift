@@ -82,6 +82,21 @@ import Testing
         #expect(event(#"{"hook_event_name":"PreToolUse","session_id":"s","tool_name":"Read","tool_input":{}}"#)?.agent == nil)
     }
 
+    @Test func helpersGoingOutAndComingBackAreReported() throws {
+        let out = try #require(event(#"{"hook_event_name":"SubagentStart","session_id":"s","agent_id":"a1","agent_type":"general-purpose"}"#))
+        #expect(out == WorkEvent(.helperStarted, session: "s", agent: "a1"))
+        let fields = try #require(JSONSerialization.jsonObject(with: out.encodedLine()) as? [String: Any])
+        #expect(Set(fields.keys) == ["kind", "session", "agent"])
+        let back = event(#"{"hook_event_name":"SubagentStop","session_id":"s","agent_id":"a1","agent_type":"general-purpose","last_assistant_message":"secret findings"}"#)
+        #expect(back == WorkEvent(.helperFinished, session: "s", agent: "a1"))
+    }
+
+    @Test func claudeCodesOwnBackgroundAgentsAreNotHelpers() {
+        #expect(event(#"{"hook_event_name":"SubagentStop","session_id":"s","agent_id":"a9","agent_type":""}"#) == nil)
+        #expect(event(#"{"hook_event_name":"SubagentStart","session_id":"s","agent_id":"a9"}"#) == nil)
+        #expect(event(#"{"hook_event_name":"SubagentStart","session_id":"s","agent_type":"general-purpose"}"#) == nil)
+    }
+
     @Test func aRunCutShortIsNotAPass() {
         #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"npm test"},"tool_response":{"stdout":"","stderr":"","interrupted":true}}"#)?.kind == .toolFinished)
         #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"npm test"},"tool_response":{"stdout":"","backgroundTaskId":"b1"}}"#)?.kind == .toolFinished)

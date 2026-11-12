@@ -75,6 +75,8 @@ enum Sheets {
             Cell(label: "buryBone, digging", action: .buryBone, at: 1.2, length: 3.4),
             Cell(label: "buryBone, covering", action: .buryBone, at: 2.8, length: 3.4),
             Cell(label: "bark", action: .bark, at: 0.34, length: 1.2),
+            Cell(label: "listen", action: .listen, at: 0.5, length: 1.8),
+            Cell(label: "listen, other ear", action: .listen, at: 1.5, length: 1.8),
         ]
         for (name, background) in [("dark", 0x1E1F26 as UInt32), ("light", 0xF2F0EA as UInt32)] {
             try render(postures, columns: 6, background: background, to: "\(directory)/poses-\(name).png")

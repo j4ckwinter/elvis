@@ -98,6 +98,8 @@ case "demo":
         ("Claude reads files. He follows the trail.", WorkEvent(.toolStarted, session: "demo", flavour: .read), 7),
         ("Claude edits. He helps by digging.", WorkEvent(.toolStarted, session: "demo", flavour: .edit), 7),
         ("Claude runs a command. He points.", WorkEvent(.toolStarted, session: "demo", flavour: .shell), 5),
+        ("Claude sends out a helper. He pricks up his ears.", WorkEvent(.helperStarted, session: "demo", agent: "demo-helper"), 4),
+        ("The helper comes back.", WorkEvent(.helperFinished, session: "demo", agent: "demo-helper"), 1),
         ("The tests fail.", WorkEvent(.testsFailed, session: "demo"), 7),
         ("Claude needs your approval. He waits by the door.", WorkEvent(.needsYou, session: "demo"), 14),
         ("You answer.", WorkEvent(.youAnswered, session: "demo"), 4),

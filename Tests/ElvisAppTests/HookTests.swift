@@ -46,6 +46,11 @@ import Testing
         }
     }
 
+    @Test func aHelperCrossesAsItsIdAndNothingItSaid() throws {
+        let helper = try delivery(of: #"{"hook_event_name":"SubagentStop","session_id":"s-1","agent_id":"a1","agent_type":"general-purpose","last_assistant_message":"the hidden launch plan"}"#)
+        #expect(helper.fields == ["kind": "helper-finished", "session": "s-1", "agent": "a1"])
+    }
+
     @Test func aCommandCrossesWithoutItsText() throws {
         let command = try delivery(of: #"{"hook_event_name":"PreToolUse","session_id":"s-1","tool_name":"Bash","tool_input":{"command":"curl internal.example --header token-12345"}}"#)
         #expect(Set(command.fields.keys) == ["kind", "session", "flavour", "subject"])
