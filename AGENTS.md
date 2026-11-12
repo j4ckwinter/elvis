@@ -88,6 +88,7 @@ Commit each time a unit of work is complete and `make test` passes. Do not wait 
 - One logical change per commit. Keep a refactor separate from the behaviour change it enables, and a fix separate from an unrelated feature.
 - Commit before starting the next unit, and before a risky restructuring, so each step can be reviewed or reverted alone.
 - Use Conventional Commits: `type(scope): summary`, with the scope optional. Types in use are `feat`, `fix`, `refactor`, `test`, `docs`, `perf`, and `chore`. Write the summary in the imperative, under 72 characters, and say in the body why the change was needed when the summary does not.
+- Do not add `Co-Authored-By` trailers or any other line crediting an AI tool, in commit messages or pull request descriptions. Commits carry Jack's authorship only.
 - Stage files by name after reading `git status`. Build output, `sheets/`, and `plugin/bin/` stay out of the repository.
 - Do not amend or rebase commits that have been pushed.
 
