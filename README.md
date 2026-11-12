@@ -30,7 +30,7 @@ For one session:
 claude --plugin-dir /path/to/elvis/plugin
 ```
 
-To keep him, register this repository as a local marketplace and install the plugin from it. These commands follow the Claude Code plugin docs as read on 2026-11-12; `claude plugin validate .` passes, and the install itself has not been run here.
+To keep him, register this repository as a local marketplace and install the plugin from it. These commands follow the Claude Code plugin docs as read on 2026-11-12, and the plugin was installed this way at user scope that day. The install keeps its own copy of `plugin/`, binary included, so a later `make` does not change the installed hook.
 
 ```sh
 claude plugin marketplace add /path/to/elvis
