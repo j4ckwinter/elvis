@@ -40,6 +40,7 @@ Each decision has one owner. Put new code with the owner of the decision it make
 | How a shell command line splits into commands, and whose exit status it reports | `ShellLine.swift` |
 | Whether a command was a test run, and how it went | `TestRuns.swift` |
 | Whether a command typed in your own shell committed or pushed work | `GitRuns.swift` |
+| What each shell must run to report your own commands | `ShellIntegration.swift` |
 | What a finished shell command has to tell Elvis | `ShellNews.swift` |
 | What Claude Code's sessions are doing | `Sessions.swift` |
 | How Elvis reacts to an event, and the order he does things in | `Brain.swift` |

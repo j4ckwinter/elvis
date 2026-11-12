@@ -88,20 +88,10 @@ case "ran":
     if let news = ShellNews.ofYourOwnCommand(command, exitStatus: status) { EventSocket.send(WorkEvent(news)) }
 
 case "shell-init":
-    guard arguments.dropFirst().first == "zsh" else { fail("only zsh is supported: elvis shell-init zsh") }
-    print("""
-        # Elvis: tells the dog how your own test runs went. Add to ~/.zshrc:  eval "$(\(ownPath()) shell-init zsh)"
-        autoload -Uz add-zsh-hook
-        _elvis_preexec() { _elvis_command=$1 }
-        _elvis_precmd() {
-          local last=$?
-          [[ -n $_elvis_command ]] || return 0
-          ( '\(ownPath())' ran $last "$_elvis_command" &>/dev/null & )
-          _elvis_command=
-        }
-        add-zsh-hook preexec _elvis_preexec
-        add-zsh-hook precmd _elvis_precmd
-        """)
+    guard let shell = arguments.dropFirst().first.flatMap(ShellIntegration.Shell.init(rawValue:)) else {
+        fail("only zsh is supported: elvis shell-init zsh")
+    }
+    print(ShellIntegration.script(for: shell, elvis: ownPath()))
 
 case "demo":
     guard wake() else { fail("could not start") }
