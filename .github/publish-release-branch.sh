@@ -18,7 +18,7 @@ fi
 GIT_INDEX_FILE=$(mktemp -u)
 export GIT_INDEX_FILE
 git read-tree --empty
-git add -f .claude-plugin/marketplace.json plugin
+git add -f .claude-plugin/marketplace.json plugin LICENSE
 tree=$(git write-tree)
 rm -f "$GIT_INDEX_FILE"
 unset GIT_INDEX_FILE

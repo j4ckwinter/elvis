@@ -105,7 +105,7 @@ Expect no output before `exit 0`, for a valid payload and for garbage. `Tests/El
 
 ## Release
 
-A release is a `v<version>` tag whose version matches `plugin/.claude-plugin/plugin.json`. Pushing the tag runs `.github/workflows/release.yml`. It runs the suite, builds a universal binary with `make universal`, adds a commit holding the plugin and that binary to the `release` branch, and attaches the binary to a GitHub release. `.github/publish-release-branch.sh` refuses a tag that does not match the version.
+A release is a `v<version>` tag whose version matches `plugin/.claude-plugin/plugin.json`. Pushing the tag runs `.github/workflows/release.yml`. It runs the suite, builds a universal binary with `make universal`, adds a commit holding the plugin, that binary, and the licence to the `release` branch, and attaches the binary to a GitHub release. `.github/publish-release-branch.sh` refuses a tag that does not match the version.
 
 People who installed from `j4ckwinter/elvis#release` stay on their copy until the version string changes, so bump it in a commit before tagging. Only that workflow writes to the `release` branch.
 
