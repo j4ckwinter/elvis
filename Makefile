@@ -2,7 +2,7 @@
 TESTING_PLUGINS := $(shell xcode-select -p)/usr/lib/swift/host/plugins/testing
 PREFIX ?= $(HOME)/.local
 
-.PHONY: build test install sheets
+.PHONY: build test fingerprint install sheets
 build:
 	swift build -c release
 	mkdir -p plugin/bin
@@ -10,6 +10,9 @@ build:
 
 test:
 	swift test -Xswiftc -plugin-path -Xswiftc $(TESTING_PLUGINS)
+
+fingerprint:
+	ELVIS_FINGERPRINT=1 swift test -Xswiftc -plugin-path -Xswiftc $(TESTING_PLUGINS) --filter Fingerprint 2>&1 | grep -E "FINGERPRINT|error:|✘"
 
 install: build
 	mkdir -p $(PREFIX)/bin
