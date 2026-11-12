@@ -129,3 +129,7 @@ ELVIS_FILM=/some/dir .build/release/elvis run   # saves contact sheets of the li
 - In your own shell he sees the command and its exit status but no output, so a `git push` with nothing to send still gets a bark.
 - The shell integration covers zsh and bash. Fish is not supported.
 - Test detection is a list of known runners. An unusual runner goes unnoticed until it is added to `TestRuns.swift`.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
