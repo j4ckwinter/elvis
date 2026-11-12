@@ -1,27 +1,6 @@
 import CoreGraphics
 import Foundation
 
-/// Everything the animator needs to know about one instant of the brain.
-public struct Moment: Sendable {
-    public var action: Action
-    public var elapsed: Double
-    public var length: Double
-    public var serial: Int
-    public var world: World
-    public var mode: Brain.Mode
-    public var now: Double
-
-    public init(action: Action, elapsed: Double, length: Double, serial: Int = 0, world: World = World(), mode: Brain.Mode = .calm, now: Double = 0) {
-        self.action = action
-        self.elapsed = elapsed
-        self.length = length
-        self.serial = serial
-        self.world = world
-        self.mode = mode
-        self.now = now
-    }
-}
-
 /// Maps an action and the time spent in it to a pose. Pure, so any frame can be rendered on its own.
 public enum Choreography {
     private static let tau = 2 * Double.pi
