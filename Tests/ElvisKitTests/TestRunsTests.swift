@@ -67,6 +67,17 @@ import Testing
         #expect(TestRuns.verdict(command: "npm test && echo done", exitStatus: 1, output: "Tests: 1 failed, 12 passed, 13 total") == .failed)
     }
 
+    @Test func aFailureAfterOnlyAChangeOfDirectoryIsTheRunnersHoweverItReadsUnlessTheChangeItselfFailed() {
+        #expect(TestRuns.verdict(command: "cd app && npm test", exitStatus: 1, output: "src/a.ts(3,1): error TS2304: Cannot find name 'foo'.") == .failed)
+        #expect(TestRuns.verdict(command: "cd pkg && swift test", exitStatus: 1, output: "error: emit-module command failed with exit code 1") == .failed)
+        #expect(TestRuns.verdict(command: "cd a && pushd b && pytest", exitStatus: 2, output: "ImportError while importing test module") == .failed)
+        #expect(TestRuns.verdict(command: "cd missing && npm test", exitStatus: 1, output: "(eval):cd:1: no such file or directory: missing") == nil)
+        #expect(TestRuns.verdict(command: "cd missing && npm test", exitStatus: 1, output: "bash: line 1: cd: missing: No such file or directory") == nil)
+        #expect(TestRuns.verdict(command: "cd app && npm test", exitStatus: 1, output: nil) == nil, "with no output there is no telling which step failed")
+        #expect(TestRuns.verdict(command: "cd app && npm run build && npm test", exitStatus: 1, output: "error TS2304: Cannot find name 'foo'.") == nil)
+        #expect(TestRuns.verdict(command: "cd app && npm test && echo done", exitStatus: 1, output: "error TS2304: Cannot find name 'foo'.") == nil)
+    }
+
     @Test func aChainThatSucceedsMeansTheTestsPassed() {
         #expect(TestRuns.verdict(command: "cd app && npm test", exitStatus: 0, output: nil) == .passed)
         #expect(TestRuns.verdict(command: "npm run build && npm test && echo done", exitStatus: 0, output: nil) == .passed)

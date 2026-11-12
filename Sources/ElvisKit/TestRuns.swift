@@ -11,8 +11,10 @@ public enum TestRuns {
         if exitStatus == 0 { return .passed }
         let runnerNeverStartedOrWasKilled = exitStatus >= 126
         if runnerNeverStartedOrWasKilled { return nil }
-        if run.statusMayBeAnotherCommands { return output.map(reportsFailedTests) == true ? .failed : nil }
-        return .failed
+        guard run.statusMayBeAnotherCommands else { return .failed }
+        guard let output else { return nil }
+        if reportsFailedTests(output) { return .failed }
+        return run.onlyAChangeOfDirectoryCameFirst && !reportsAFailedChangeOfDirectory(output) ? .failed : nil
     }
 
     public static func isTestCommand(_ command: String) -> Bool {
@@ -22,6 +24,7 @@ public enum TestRuns {
     struct Segment {
         var statusIsMasked: Bool
         var statusMayBeAnotherCommands: Bool
+        var onlyAChangeOfDirectoryCameFirst: Bool
     }
 
     static func testSegment(in command: String) -> Segment? {
@@ -31,9 +34,15 @@ public enum TestRuns {
         let masked = line.hidesStatus(ofPieceAt: index)
         let runsOnlyIfTheStepBeforeSucceeds = index > pieces.startIndex && pieces[index - 1].joiner == "&&"
         let isFollowedByAnotherCommand = index < pieces.endIndex - 1
-        return Segment(statusIsMasked: masked, statusMayBeAnotherCommands: runsOnlyIfTheStepBeforeSucceeds || isFollowedByAnotherCommand)
+        let cameFirst = pieces[..<index]
+        let onlyAChangeOfDirectoryCameFirst = !isFollowedByAnotherCommand && !cameFirst.isEmpty
+            && cameFirst.allSatisfy { $0.joiner == "&&" && changesOfDirectory.contains($0.words[0]) }
+        return Segment(
+            statusIsMasked: masked, statusMayBeAnotherCommands: runsOnlyIfTheStepBeforeSucceeds || isFollowedByAnotherCommand,
+            onlyAChangeOfDirectoryCameFirst: onlyAChangeOfDirectoryCameFirst)
     }
 
+    private static let changesOfDirectory: Set<String> = ["cd", "pushd"]
     private static let wrappers: Set<String> = [
         "time", "sudo", "command", "exec", "nice", "env", "caffeinate", "npx", "bunx", "pnpx", "dotenv", "arch", "xcrun",
     ]
@@ -156,6 +165,10 @@ public enum TestRuns {
         ]
         return matches(text, #"\b[1-9]\d*\s+(failed|failing|failures?)\b"#) || matches(text, #"\b(failed|failures?|errors?)\s*[:=]\s*[1-9]"#)
             || marks.contains(where: text.contains)
+    }
+
+    static func reportsAFailedChangeOfDirectory(_ output: String) -> Bool {
+        matches(searchable(output), #"\b(cd|pushd):"#)
     }
 
     private static func searchable(_ output: String) -> String {

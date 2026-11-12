@@ -97,7 +97,7 @@ ELVIS_FILM=/some/dir .build/release/elvis run   # saves contact sheets of the li
 - While he is resting the app checks the pointer ten times a second, so a very fast click on him can pass through to the window underneath.
 - With "Displays have separate Spaces" on, he may disappear briefly while he is carried across two displays. Not checked.
 - Claude Code reports nothing at the moment you approve a command, so he stays by the door until that command finishes. This is also why he never whines there.
-- When a chain such as `cd app && npm test` fails, he blames the tests only if the output reports failing tests. Tests that fail to compile inside a chain go unremarked.
+- When a chain such as `npm run build && npm test` fails, he blames the tests only if the output reports failing tests. After nothing but a `cd`, any failure is the runner's, unless the output shows the `cd` itself failed. Your own shell passes him no output, so there a failed chain goes unremarked.
 - The menu counts sessions and subagents but cannot name them. Project names and paths stay inside the hook.
 - Only `git commit` and `git push` count as saving and sending work. A merge, a rebase, or `gh pr create` goes unremarked.
 - Test detection is a list of known runners. An unusual runner goes unnoticed until it is added to `TestRuns.swift`.
