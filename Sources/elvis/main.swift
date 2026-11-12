@@ -55,7 +55,11 @@ case "quit":
 
 case "restart":
     EventSocket.send(WorkEvent(.quit))
-    for _ in 0..<40 where EventSocket.isSomeoneListening { usleep(50_000) }
+    var patience = 40
+    while EventSocket.isSomeoneListening, patience > 0 {
+        usleep(50_000)
+        patience -= 1
+    }
     let theOldOneMayStillHoldTheLock = !wake()
     if theOldOneMayStillHoldTheLock, !wake() { fail("could not start") }
 
