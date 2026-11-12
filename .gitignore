@@ -1,0 +1,4 @@
+.build/
+sheets/
+plugin/bin/
+.DS_Store

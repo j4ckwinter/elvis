@@ -1,0 +1,11 @@
+{
+  "name": "elvis",
+  "owner": { "name": "Jack Winter" },
+  "plugins": [
+    {
+      "name": "elvis",
+      "source": "./plugin",
+      "description": "Tells Elvis, a small desktop spaniel, what Claude Code is up to."
+    }
+  ]
+}
