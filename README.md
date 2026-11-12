@@ -114,5 +114,7 @@ ELVIS_FILM=/some/dir .build/release/elvis run   # saves contact sheets of the li
 - Claude Code reports nothing at the moment you approve a command, so he stays by the door until that command finishes. This is also why he never whines there.
 - When a chain such as `npm run build && npm test` fails, he blames the tests only if the output reports failing tests. After nothing but a `cd`, any failure is the runner's, unless the output shows the `cd` itself failed. Your own shell passes him no output, so there a failed chain goes unremarked.
 - The menu counts sessions and subagents but cannot name them. Project names and paths stay inside the hook.
-- Only `git commit` and `git push` count as saving and sending work. A merge, a rebase, or `gh pr create` goes unremarked.
+- Only a commit and a push count as saving and sending work. A merge, a rebase, or `gh pr create` goes unremarked.
+- He hears about Claude's commits and pushes from Claude Code itself, which marks the result of a command that committed or pushed. Seen in Claude Code 2.1.322; a version that does not mark them leaves him unaware.
+- In your own shell he sees the command and its exit status but no output, so a `git push` with nothing to send still gets a bark.
 - Test detection is a list of known runners. An unusual runner goes unnoticed until it is added to `TestRuns.swift`.

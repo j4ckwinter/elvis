@@ -3,14 +3,13 @@ public enum GitRuns {
         case committed, pushed
     }
 
-    public static func deed(command: String, exitStatus: Int, output: String?) -> Deed? {
+    public static func deed(command: String, exitStatus: Int) -> Deed? {
         guard exitStatus == 0 else { return nil }
         let line = ShellLine(command)
         let deeds = line.pieces.indices.compactMap { index in
             line.hidesStatus(ofPieceAt: index) || line.mayHaveSkipped(pieceAt: index) ? nil : deed(of: line.pieces[index].words)
         }
-        let nothingWasSent = output?.contains("Everything up-to-date") == true
-        if deeds.contains(.pushed), !nothingWasSent { return .pushed }
+        if deeds.contains(.pushed) { return .pushed }
         return deeds.contains(.committed) ? .committed : nil
     }
 

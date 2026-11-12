@@ -39,7 +39,7 @@ Each decision has one owner. Put new code with the owner of the decision it make
 | What a Claude Code hook payload means | `ClaudeHooks.swift` |
 | How a shell command line splits into commands, and whose exit status it reports | `ShellLine.swift` |
 | Whether a command was a test run, and how it went | `TestRuns.swift` |
-| Whether a command committed or pushed work | `GitRuns.swift` |
+| Whether a command typed in your own shell committed or pushed work | `GitRuns.swift` |
 | What a finished shell command has to tell Elvis | `ShellNews.swift` |
 | What Claude Code's sessions are doing | `Sessions.swift` |
 | How Elvis reacts to an event, and the order he does things in | `Brain.swift` |
@@ -85,7 +85,7 @@ These were once comments. Keep them true, and change them here when the code cha
 - In `WorkEvent`, an empty `session` means the event belongs to no Claude Code session, `subject` is an opaque fingerprint that pairs a permission request with its tool call, and `agent` is set only for events from inside a subagent and for a helper going out or coming back.
 - Hook payload field names follow https://code.claude.com/docs/en/hooks.md as read on 2026-11-12. Hooks are asynchronous, so an event can arrive after its session has ended; `Sessions` ignores those.
 - `SubagentStop` also fires for agents Claude Code runs for itself, with an empty `agent_type`. Only a subagent with a type counts as a helper. A helper can outlive the turn that sent it out, so `Sessions` forgets it when it reports back, when its session ends, or when the session has been silent for `staleAfter`.
-- Claude Code 2.1.322 adds `gitOperation` to a Bash `tool_response`, with a `commit` key, a `push` key, or both, when the command committed or pushed. A push with nothing to send and a dry run carry neither. The hooks reference does not describe the field; it was read from real payloads on 2026-11-12. `ClaudeHooks` trusts it when it is there and falls back to reading the command.
+- Claude Code 2.1.322 adds `gitOperation` to a Bash `tool_response`, with a `commit` key, a `push` key, or both, when the command committed or pushed. A push with nothing to send and a dry run carry neither. The hooks reference does not describe the field; it was read from real payloads on 2026-11-12. It is the only thing `ClaudeHooks` takes as proof of a commit or push, because the command text can mention one without doing it. `GitRuns` reads the command only for the shell integration, which has nothing else to go on.
 - `Brain.Tuning.staleAfter` is longer than any single tool call may run, so that much silence means the session has gone. `siblingWindow` covers tool calls that start alongside a permission request and are not an answer to it.
 - `Keepsakes.spot` is in screen points. Nil means his corner.
 

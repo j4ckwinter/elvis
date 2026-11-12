@@ -40,7 +40,7 @@ public enum ClaudeHooks {
         case "PostToolUse":
             let response = object["tool_response"] as? [String: Any]
             let cutShort = response?["interrupted"] as? Bool == true || response?["backgroundTaskId"] != nil
-            let kind = cutShort ? nil : shellNews(tool: tool, input: input, exitStatus: 0, output: output(of: object["tool_response"])) ?? gitNews(reportedIn: response)
+            let kind = cutShort ? nil : testNews(tool: tool, input: input, exitStatus: 0, output: output(of: object["tool_response"])) ?? gitNews(reportedIn: response)
             return WorkEvent(kind ?? .toolFinished, session: session, subject: subject, agent: agent)
         case "PostToolUseFailure":
             let error = object["error"] as? String ?? ""
@@ -48,7 +48,7 @@ public enum ClaudeHooks {
             guard !interrupted, let status = exitStatus(ofCommandThatRan: error) else {
                 return WorkEvent(.toolFinished, session: session, subject: subject, agent: agent)
             }
-            let kind = shellNews(tool: tool, input: input, exitStatus: status, output: error)
+            let kind = testNews(tool: tool, input: input, exitStatus: status, output: error)
             return WorkEvent(kind ?? .toolFinished, session: session, subject: subject, agent: agent)
         case "Stop":
             return WorkEvent(.taskFinished, session: session)
@@ -66,10 +66,10 @@ public enum ClaudeHooks {
         "permission_prompt", "elicitation_dialog", "elicitation_url_dialog", "agent_needs_input",
     ]
 
-    private static func shellNews(tool: String, input: [String: Any], exitStatus: Int, output: String?) -> WorkEvent.Kind? {
+    private static func testNews(tool: String, input: [String: Any], exitStatus: Int, output: String?) -> WorkEvent.Kind? {
         guard tool == "Bash" || tool == "PowerShell", let command = input["command"] as? String else { return nil }
         if input["run_in_background"] as? Bool == true { return nil }
-        return ShellNews.kind(ofCommand: command, exitStatus: exitStatus, output: output)
+        return ShellNews.ofTests(command: command, exitStatus: exitStatus, output: output)
     }
 
     private static func gitNews(reportedIn response: [String: Any]?) -> WorkEvent.Kind? {
