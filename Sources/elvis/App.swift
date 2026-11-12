@@ -7,7 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var keepsakes = Keepsakes.load()
     private var window: NSPanel?
     private let view = YardView()
-    private let whine = Whine()
+    private let speaker = Speaker()
     private var timer: Timer?
     private var lastTick = ProcessInfo.processInfo.systemUptime
     private var lastSave = ProcessInfo.processInfo.systemUptime
@@ -100,7 +100,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         brain.tick(dt)
         for cue in brain.drainCues() where cue == .whine {
             stage.showWhine(at: brain.moment)
-            if keepsakes.sounds { whine.play() }
+            if keepsakes.sounds { speaker.play(cue) }
         }
         carrying?.tick()
         let corner = window?.frame.origin ?? .zero
