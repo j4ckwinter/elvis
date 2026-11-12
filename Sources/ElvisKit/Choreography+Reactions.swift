@@ -68,6 +68,29 @@ extension Choreography {
         return p
     }
 
+    static func buryBone(elapsed t: Double) -> Pose {
+        var covering = Pose.noseDown
+        covering.head.x += 2.2 * sin((t - boneBuriedAfter) * 9)
+        covering.tail = 0.95 + sin(t * 14) * 0.35
+        return dig(elapsed: t, length: boneBuriedAfter).mixed(with: covering, ease((t - boneBuriedAfter) / 0.3))
+    }
+
+    static func bark(elapsed t: Double) -> Pose {
+        var p = Pose.stand
+        let woof = barkTimes.map { swell(t - $0, 0.26, attack: 0.05, release: 0.16) }.max() ?? 0
+        p.pitch = 0.2 + 0.3 * woof
+        p.head = p.head + CGPoint(x: 0.5, y: 2.2) * woof
+        p.mouth = 0.85 * woof
+        p.lift = 1.6 * woof
+        p.paws[0].y += 1.4 * woof
+        p.paws[1].y += 1.4 * woof
+        p.earLift = 0.4
+        p.earFling = 0.5 * woof
+        p.brow = 0.5
+        p.tail = 0.9 + sin(t * 15) * 0.4
+        return p
+    }
+
     static func flop(elapsed t: Double, length d: Double) -> Pose {
         let down = ease(t / 0.55)
         var p = Pose.stand.mixed(with: .sploot, down)

@@ -80,7 +80,7 @@ struct Sessions: Sendable {
             } else {
                 session.beginWork(at: now)
             }
-        case .toolFinished, .testsPassed, .testsFailed:
+        case .toolFinished, .testsPassed, .testsFailed, .committed, .pushed:
             if session.state == .waiting {
                 if session.pending == nil || session.pending == event.subject { session.state = .working }
             } else {

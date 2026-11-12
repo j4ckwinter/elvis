@@ -36,6 +36,8 @@ extension Brain {
         case .droop: return "sorry about the tests"
         case .spin: return "they pass, they pass"
         case .confused: return "not sure what just happened"
+        case .buryBone: return "burying that one for later"
+        case .bark: return "telling the whole street"
         case .watchBall, .chaseBall, .skid, .grabBall: return "ball ball ball"
         case .dropBall, .proudSit: return "brought you this"
         case .flop: return "done in, and delighted"

@@ -2,7 +2,7 @@ import Foundation
 
 public struct Brain: Sendable {
     public enum Mode: Equatable, Sendable { case calm, working, waiting }
-    public enum Cue: Equatable, Sendable { case whine }
+    public enum Cue: Equatable, Sendable { case whine, bark }
 
     public struct Tuning: Sendable {
         public var longRun = 120.0
@@ -12,6 +12,8 @@ public struct Brain: Sendable {
         public var dozeUntil = 240.0
         public var fetchEvery = 45.0
         public var whineEvery = 90.0
+        public var buryEvery = 20.0
+        public var barkEvery = 60.0
         public var staleAfter = 15.0 * 60
         public var waitingStaleAfter = 2.0 * 60 * 60
         public var siblingWindow = 3.0
@@ -45,6 +47,8 @@ public struct Brain: Sendable {
     private(set) var settledSince = 0.0
     private var lastFetch = -1e9
     private var lastWhine = -1e9
+    private var lastBurial = -1e9
+    private var lastBark = -1e9
     private var lastFail = -1e9
     var flavour: WorkEvent.Flavour?
     private(set) var flavourAt = -1e9
@@ -107,6 +111,15 @@ public struct Brain: Sendable {
             } else {
                 react([Step(.wagAtYou, 2.0)])
             }
+        case .committed:
+            guard after != .waiting, now - lastBurial >= tuning.buryEvery else { break }
+            lastBurial = now
+            react([Step(.buryBone, 3.4)], append: reacting)
+        case .pushed:
+            guard after != .waiting else { break }
+            let barkedLately = now - lastBark < tuning.barkEvery
+            if !barkedLately { lastBark = now }
+            react([barkedLately ? Step(.wagAtYou, 2.0) : Step(.bark, 1.2)], append: reacting)
         case .throwBall:
             if after != .waiting, !isFetching { startFetch(celebrate: false) }
         case .sessionStarted:
@@ -354,7 +367,7 @@ public struct Brain: Sendable {
             world.ball?.state = .carried
         case .dropBall:
             dropBallIfCarried()
-        case .dig:
+        case .dig, .buryBone:
             world.mud = min(1, world.mud + 0.03)
         case .shake:
             world.mud *= 0.4
@@ -375,9 +388,14 @@ public struct Brain: Sendable {
         duration = step.duration
         elapsed = 0
         actionSerial += 1
+        if let cue = Brain.cue(startedBy: step.action) { cues.append(cue) }
         if case .go(let target, _) = step.action, abs(target - world.x) > 0.01 {
             world.facing = target > world.x ? 1 : -1
         }
+    }
+
+    private static func cue(startedBy action: Action) -> Cue? {
+        action == .bark ? .bark : nil
     }
 
     mutating func chance(_ probability: Double) -> Bool {

@@ -11,7 +11,7 @@ Requires macOS 14 or later and the Swift toolchain (Xcode or Command Line Tools)
 ```sh
 make            # builds .build/release/elvis and copies it to plugin/bin/elvis
 plugin/bin/elvis start
-plugin/bin/elvis demo     # walks through his reactions, about 70 seconds
+plugin/bin/elvis demo     # walks through his reactions, about 80 seconds
 ```
 
 `make install` also copies the binary to `~/.local/bin/elvis`.
@@ -51,6 +51,8 @@ Once the plugin is loaded, starting or resuming a Claude Code session wakes Elvi
 | Claude searches the web | Sniffs the air |
 | Tests fail | Sits, ears down, and whines softly, at most once every 90 seconds |
 | Tests pass | Chases a ball, trots it back, and sits there looking proud. One fetch per 45 seconds; otherwise a wag |
+| Claude commits | Buries a bone where it will be safe. One bone per 20 seconds |
+| Claude pushes | Barks twice to tell the whole street. One bark a minute; otherwise a wag |
 | Claude needs your approval or an answer | Goes to the door, sits, and stares at you. He tilts his head, paws the door, and after a couple of minutes lies down with his chin on the floor. He stays silent while he waits |
 | You answer | A relieved hop, then back to work |
 | A run of two minutes or more ends | Flops flat out, tongue out, tail thumping |
@@ -58,15 +60,15 @@ Once the plugin is loaded, starting or resuming a Claude Code session wakes Elvi
 
 Left alone he scratches, sneezes, stretches, chases his tail and regrets it, circles before lying down, twitches and dreams of tennis balls in his sleep, and nudges the ball toward you in case you missed it. Mud builds up through the day as Claude edits; he shakes it off when things go quiet, and he starts each day clean. Move the pointer over him to stroke him.
 
-## Your own test runs
+## Your own test runs, commits, and pushes
 
-Elvis can also react to tests you run yourself in zsh. Add this to `~/.zshrc`:
+Elvis can also react to tests you run yourself in zsh, and to your own `git commit` and `git push`. Add this to `~/.zshrc`:
 
 ```sh
 eval "$(/path/to/elvis shell-init zsh)"
 ```
 
-It reports each finished command's exit status to Elvis, who ignores everything that is not a test run. When a pipe hides the runner's exit status, as in `npm test | tail`, he stays out of it rather than guess. He does the same when a chain such as `cd app && npm test` fails, because the status could belong to either command.
+It reports each finished command's exit status to Elvis, who ignores everything that is not a test run, a commit, or a push. When a pipe hides the command's exit status, as in `npm test | tail` or `git push | cat`, he stays out of it rather than guess. He does the same when a chain such as `cd app && npm test` fails, because the status could belong to either command.
 
 ## What leaves the hook
 
@@ -95,4 +97,5 @@ ELVIS_FILM=/some/dir .build/release/elvis run   # saves contact sheets of the li
 - With "Displays have separate Spaces" on, he may disappear briefly while he is carried across two displays. Not checked.
 - Claude Code reports nothing at the moment you approve a command, so he stays by the door until that command finishes. This is also why he never whines there.
 - When a chain such as `cd app && npm test` fails, he blames the tests only if the output reports failing tests. Tests that fail to compile inside a chain go unremarked.
+- Only `git commit` and `git push` count as saving and sending work. A merge, a rebase, or `gh pr create` goes unremarked.
 - Test detection is a list of known runners. An unusual runner goes unnoticed until it is added to `TestRuns.swift`.

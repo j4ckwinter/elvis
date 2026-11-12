@@ -36,7 +36,7 @@ public enum ClaudeHooks {
         case "PostToolUse":
             let response = object["tool_response"] as? [String: Any]
             let cutShort = response?["interrupted"] as? Bool == true || response?["backgroundTaskId"] != nil
-            let kind = cutShort ? nil : shellNews(tool: tool, input: input, exitStatus: 0, output: output(of: object["tool_response"]))
+            let kind = cutShort ? nil : shellNews(tool: tool, input: input, exitStatus: 0, output: output(of: object["tool_response"])) ?? gitNews(reportedIn: response)
             return WorkEvent(kind ?? .toolFinished, session: session, subject: subject, agent: agent)
         case "PostToolUseFailure":
             let error = object["error"] as? String ?? ""
@@ -66,6 +66,12 @@ public enum ClaudeHooks {
         guard tool == "Bash" || tool == "PowerShell", let command = input["command"] as? String else { return nil }
         if input["run_in_background"] as? Bool == true { return nil }
         return ShellNews.kind(ofCommand: command, exitStatus: exitStatus, output: output)
+    }
+
+    private static func gitNews(reportedIn response: [String: Any]?) -> WorkEvent.Kind? {
+        guard let git = response?["gitOperation"] as? [String: Any] else { return nil }
+        if git["push"] != nil { return .pushed }
+        return git["commit"] != nil ? .committed : nil
     }
 
     private static func exitStatus(ofCommandThatRan error: String) -> Int? {

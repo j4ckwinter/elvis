@@ -39,6 +39,15 @@ extension Painter {
             path.move(to: CGPoint(x: at.x, y: at.y))
             path.addLine(to: CGPoint(x: at.x, y: at.y + 0.01))
             outlined(ctx, path, colour: rgb(0xFFD23F, alpha), width: 1.0, alpha: alpha)
+        case .woof:
+            let towards = p.vx >= 0 ? 0.0 : Double.pi
+            let path = CGMutablePath()
+            for ring in [1.0, 1.6] {
+                let radius = p.size * (0.4 + life * 0.9) * ring
+                path.move(to: CGPoint(x: at.x + cos(towards - 0.6) * radius, y: at.y + sin(towards - 0.6) * radius))
+                path.addArc(center: at, radius: radius, startAngle: towards - 0.6, endAngle: towards + 0.6, clockwise: false)
+            }
+            outlined(ctx, path, colour: rgb(0xFFD23F, alpha), width: 0.7, alpha: alpha)
         case .query:
             let s = p.size
             let path = CGMutablePath()

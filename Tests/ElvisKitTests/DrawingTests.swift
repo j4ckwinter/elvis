@@ -10,7 +10,7 @@ import Testing
         .go(to: 150, gait: .run), .go(to: 150, gait: .slink), .go(to: 150, gait: .trudge),
         .sniffSpot, .dig, .point, .sniffAir, .checkIn, .pant, .startle, .boundUp, .droop, .spin, .confused,
         .watchBall, .chaseBall, .skid, .grabBall, .dropBall, .proudSit, .flop, .stare, .tiltHead, .pawDoor,
-        .glanceDoor, .lieByDoor, .relief, .held, .landed,
+        .glanceDoor, .lieByDoor, .relief, .held, .landed, .buryBone, .bark,
     ]
 
     @Test(arguments: everyAction)

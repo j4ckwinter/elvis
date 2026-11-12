@@ -52,12 +52,12 @@ extension Stage {
                 }
             }
         case .dig:
-            let count = owed(.dirt, perSecond: 26, dt)
-            for _ in 0..<count {
-                particles.append(Particle(
-                    kind: .dirt, x: x + scale * 12, y: 1,
-                    vx: -side * Double.random(in: 18...46, using: &rng), vy: Double.random(in: 18...46, using: &rng),
-                    life: 0.9, size: Double.random(in: 0.6...1.3, using: &rng)))
+            sprayDirt(from: x + scale * 12, behind: side, dt)
+        case .buryBone:
+            if m.elapsed < Choreography.boneBuriedAfter { sprayDirt(from: x + scale * 12, behind: side, dt) }
+        case .bark:
+            if Choreography.barkTimes.contains(where: crossed) {
+                particles.append(Particle(kind: .woof, x: nose.x + side * 3, y: nose.y + 1, vx: side * 9, vy: 2, life: 0.5, size: 3))
             }
         case .sniffSpot, .go(_, .sniff), .sniffAir:
             if due(.puff, every: 0.42, dt) {
@@ -99,6 +99,16 @@ extension Stage {
         }
     }
 
+    private mutating func sprayDirt(from x: Double, behind side: Double, _ dt: Double) {
+        let count = owed(.dirt, perSecond: 26, dt)
+        for _ in 0..<count {
+            particles.append(Particle(
+                kind: .dirt, x: x, y: 1,
+                vx: -side * Double.random(in: 18...46, using: &rng), vy: Double.random(in: 18...46, using: &rng),
+                life: 0.9, size: Double.random(in: 0.6...1.3, using: &rng)))
+        }
+    }
+
     private mutating func heart(above top: CGPoint) {
         particles.append(Particle(
             kind: .heart, x: top.x + Double.random(in: -5...5, using: &rng), y: top.y,
@@ -128,7 +138,7 @@ extension Stage {
             case .puff:
                 particles[i].vx *= 1 - min(1, 3 * dt)
                 particles[i].size += 2.2 * dt
-            case .heart, .whine, .bang, .query:
+            case .heart, .whine, .bang, .query, .woof:
                 break
             }
             particles[i].x += particles[i].vx * dt

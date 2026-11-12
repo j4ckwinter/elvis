@@ -1,5 +1,5 @@
 public struct Particle: Sendable {
-    public enum Kind: Sendable { case zzz, heart, drop, dirt, puff, whine, bang, query }
+    public enum Kind: Sendable { case zzz, heart, drop, dirt, puff, whine, bang, query, woof }
     public var kind: Kind
     public var x: Double
     public var y: Double

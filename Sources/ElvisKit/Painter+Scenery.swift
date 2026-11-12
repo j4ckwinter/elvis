@@ -115,9 +115,28 @@ extension Painter {
                 let centre = CGPoint(x: head.x + cos(angle) * 8, y: head.y + 9 + sin(angle) * 2)
                 sticker(ctx, star(at: centre, size: 1.5), fill: rgb(0xFFE066, fade))
             }
+        case .buryBone:
+            let sunk = ease((frame.elapsed - 0.4) / (Choreography.boneBuriedAfter - 0.6))
+            guard sunk < 1 else { return }
+            ctx.saveGState()
+            ctx.clip(to: CGRect(x: frame.x - 40, y: -0.6, width: 80, height: 12))
+            sticker(ctx, bone(at: CGPoint(x: frame.x + side * 21, y: 1.7 - 5 * sunk)), fill: rgb(0xF2E9D0))
+            ctx.restoreGState()
         default:
             break
         }
+    }
+
+    private static func bone(at c: CGPoint) -> CGPath {
+        let half = 3.0, knob = 1.1
+        let path = CGMutablePath()
+        path.addRect(CGRect(x: c.x - half, y: c.y - 0.7, width: half * 2, height: 1.4))
+        for end in [-half, half] {
+            for lobe in [-0.75, 0.75] {
+                path.addEllipse(in: CGRect(x: c.x + end - knob, y: c.y + lobe - knob, width: knob * 2, height: knob * 2))
+            }
+        }
+        return path
     }
 
     static func sticker(_ ctx: CGContext, _ path: CGPath, fill: CGColor, alpha: Double = 1) {

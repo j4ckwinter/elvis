@@ -10,6 +10,8 @@ public struct WorkEvent: Codable, Equatable, Sendable {
         case youAnswered = "you-answered"
         case testsPassed = "tests-passed"
         case testsFailed = "tests-failed"
+        case committed
+        case pushed
         case taskFinished = "task-finished"
         case taskStumbled = "task-stumbled"
         case sessionIdle = "session-idle"

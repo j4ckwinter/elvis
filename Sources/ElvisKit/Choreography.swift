@@ -3,6 +3,8 @@ import Foundation
 public enum Choreography {
     static let tau = 2 * Double.pi
     static let carryHeight = 14.0
+    static let boneBuriedAfter = 2.0
+    static let barkTimes = [0.2, 0.62]
 
     public static func pose(for moment: Moment) -> Pose {
         let elapsed = moment.elapsed
@@ -48,6 +50,8 @@ public enum Choreography {
         case .droop: return droop(elapsed: elapsed, length: length)
         case .spin: return spin(elapsed: elapsed, length: length)
         case .confused: return confused(elapsed: elapsed)
+        case .buryBone: return buryBone(elapsed: elapsed)
+        case .bark: return bark(elapsed: elapsed)
         case .flop: return flop(elapsed: elapsed, length: length)
         case .relief: return relief(elapsed: elapsed, length: length)
 

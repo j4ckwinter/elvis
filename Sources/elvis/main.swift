@@ -65,7 +65,8 @@ case "tell":
     guard arguments.count > 1, let kind = WorkEvent.Kind(rawValue: arguments[1]) else { fail("tell needs one of: \(WorkEvent.Kind.allCases.map(\.rawValue).joined(separator: ", "))") }
     var event = WorkEvent(kind, session: "by-hand")
     if arguments.count > 2 { event.flavour = WorkEvent.Flavour(rawValue: arguments[2]) }
-    if kind == .testsPassed || kind == .testsFailed || kind == .throwBall { event.session = "" }
+    let needsNoSession: Set<WorkEvent.Kind> = [.testsPassed, .testsFailed, .committed, .pushed, .throwBall]
+    if needsNoSession.contains(kind) { event.session = "" }
     if !EventSocket.send(event) { fail("Elvis isn't running. Try: elvis start") }
 
 case "ran":
@@ -101,6 +102,8 @@ case "demo":
         ("Claude needs your approval. He waits by the door.", WorkEvent(.needsYou, session: "demo"), 14),
         ("You answer.", WorkEvent(.youAnswered, session: "demo"), 4),
         ("The tests pass. Fetch.", WorkEvent(.testsPassed, session: "demo"), 13),
+        ("Claude commits. He buries a bone.", WorkEvent(.committed, session: "demo"), 5),
+        ("Claude pushes. He tells the street.", WorkEvent(.pushed, session: "demo"), 3),
         ("Claude finishes.", WorkEvent(.taskFinished, session: "demo"), 6),
         ("The session ends.", WorkEvent(.sessionEnded, session: "demo"), 0),
     ]

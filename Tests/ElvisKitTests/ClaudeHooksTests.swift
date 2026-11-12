@@ -55,6 +55,22 @@ import Testing
         #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"ls"},"tool_response":{"stdout":""}}"#)?.kind == .toolFinished)
     }
 
+    @Test func commitsAndPushesAreReportedWithoutTheirMessage() throws {
+        let committed = try #require(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"git commit -m \"rename the hidden launch plan\""},"tool_response":{"stdout":"[main 7921613] rename the hidden launch plan","stderr":""}}"#))
+        #expect(committed.kind == .committed)
+        #expect(!String(decoding: committed.encodedLine(), as: UTF8.self).contains("hidden"))
+        #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"git add -A && git commit -m x && git push"},"tool_response":{"stdout":"   27da084..2e3c8c6  main -> main","stderr":""}}"#)?.kind == .pushed)
+        #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"git push"},"tool_response":{"stdout":"Everything up-to-date","stderr":""}}"#)?.kind == .toolFinished)
+        #expect(event(#"{"hook_event_name":"PostToolUseFailure","session_id":"s","tool_name":"Bash","tool_input":{"command":"git push"},"error":"Exit code 128\nfatal: No configured push destination."}"#)?.kind == .toolFinished)
+    }
+
+    @Test func claudeCodesOwnWordOnACommitOrPushCountsWhenTheCommandHidesIt() {
+        #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"git commit -m x 2>&1 | tail -2"},"tool_response":{"stdout":"[main 27da084] x","stderr":"","gitOperation":{"commit":{"sha":"27da084","kind":"committed","branch":"main"}}}}"#)?.kind == .committed)
+        #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"git commit -m x && git push 2>&1 | tail -3"},"tool_response":{"stdout":"main -> main","stderr":"","gitOperation":{"commit":{"sha":"2e3c8c6","kind":"committed","branch":"main"},"push":{"branch":"main"}}}}"#)?.kind == .pushed)
+        #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"git push --dry-run | cat"},"tool_response":{"stdout":"main -> main","stderr":""}}"#)?.kind == .toolFinished)
+        #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"npm test && git commit -m x"},"tool_response":{"stdout":"ok","stderr":"","gitOperation":{"commit":{"sha":"2e3c8c6","kind":"committed","branch":"main"}}}}"#)?.kind == .testsPassed, "the tests are the bigger news")
+    }
+
     @Test func onlyAFreshOrResumedSessionCountsAsStarting() {
         #expect(event(#"{"hook_event_name":"SessionStart","session_id":"s","source":"resume"}"#)?.kind == .sessionStarted)
         #expect(event(#"{"hook_event_name":"SessionStart","session_id":"s","source":"compact"}"#) == nil)

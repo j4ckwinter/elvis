@@ -36,6 +36,7 @@ Each decision has one owner. Put new code with the owner of the decision it make
 | What a Claude Code hook payload means | `ClaudeHooks.swift` |
 | How a shell command line splits into commands, and whose exit status it reports | `ShellLine.swift` |
 | Whether a command was a test run, and how it went | `TestRuns.swift` |
+| Whether a command committed or pushed work | `GitRuns.swift` |
 | What a finished shell command has to tell Elvis | `ShellNews.swift` |
 | What Claude Code's sessions are doing | `Sessions.swift` |
 | How Elvis reacts to an event, and the order he does things in | `Brain.swift` |
@@ -79,6 +80,7 @@ These were once comments. Keep them true, and change them here when the code cha
 - `Brain.actionSerial` changes each time an action starts, including a repeat of the same action.
 - In `WorkEvent`, an empty `session` means the event belongs to no Claude Code session, `subject` is an opaque fingerprint that pairs a permission request with its tool call, and `agent` is set only for events from inside a subagent.
 - Hook payload field names follow https://code.claude.com/docs/en/hooks.md as read on 2026-11-12. Hooks are asynchronous, so an event can arrive after its session has ended; `Sessions` ignores those.
+- Claude Code 2.1.322 adds `gitOperation` to a Bash `tool_response`, with a `commit` key, a `push` key, or both, when the command committed or pushed. A push with nothing to send and a dry run carry neither. The hooks reference does not describe the field; it was read from real payloads on 2026-11-12. `ClaudeHooks` trusts it when it is there and falls back to reading the command.
 - `Brain.Tuning.staleAfter` is longer than any single tool call may run, so that much silence means the session has gone. `siblingWindow` covers tool calls that start alongside a permission request and are not an answer to it.
 - `Keepsakes.spot` is in screen points. Nil means his corner.
 

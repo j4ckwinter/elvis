@@ -148,6 +148,66 @@ import Testing
         #expect(brain.action == .wagAtYou, "a second pass straight away is a wag, not another fetch")
     }
 
+    @Test func buriesABoneWhenWorkIsCommitted() {
+        var brain = working()
+        let mudBefore = brain.world.mud
+        brain.handle(WorkEvent(.committed, session: "s"))
+        #expect(brain.action == .buryBone)
+        #expect(brain.mode == .working)
+        run(&brain, for: 4)
+        #expect(brain.world.mud > mudBefore + 0.02)
+
+        brain.handle(WorkEvent(.committed, session: "s"))
+        #expect(brain.action != .buryBone, "a second commit straight away is not worth another bone")
+    }
+
+    @Test func aCommitStraightAfterPassingTestsWaitsForTheFetchToFinish() {
+        var brain = working()
+        brain.handle(WorkEvent(.testsPassed, session: "s"))
+        brain.handle(WorkEvent(.committed, session: "s"))
+        #expect(brain.isFetching)
+        let seen = run(&brain, for: 30)
+        let proud = seen.firstIndex(of: .proudSit), burying = seen.firstIndex(of: .buryBone)
+        #expect(proud != nil && burying == proud.map { $0 + 1 })
+    }
+
+    @Test func barksWhenWorkIsPushedAndOnlyWagsIfItHappensAgainSoon() {
+        var brain = working()
+        brain.handle(WorkEvent(.pushed, session: "s"))
+        #expect(brain.action == .bark)
+        #expect(brain.drainCues() == [.bark])
+        run(&brain, for: 10)
+        brain.handle(WorkEvent(.pushed, session: "s"))
+        #expect(brain.action == .wagAtYou)
+        #expect(brain.drainCues().isEmpty)
+    }
+
+    @Test func yourOwnCommitsAndPushesNeedNoSession() {
+        var brain = Brain(seed: 5)
+        run(&brain, for: 5)
+        brain.handle(WorkEvent(.committed))
+        #expect(brain.action == .buryBone)
+        #expect(brain.mode == .calm)
+    }
+
+    @Test func keepsQuietAboutCommitsAndPushesWhileHeWaitsAtTheDoor() {
+        var brain = working()
+        brain.handle(WorkEvent(.needsYou, session: "s", subject: "Bash:1"))
+        brain.handle(WorkEvent(.pushed, session: "other"))
+        brain.handle(WorkEvent(.committed, session: "other"))
+        let seen = run(&brain, for: 20)
+        #expect(!seen.contains(.bark) && !seen.contains(.buryBone))
+        #expect(brain.drainCues().isEmpty)
+    }
+
+    @Test func aCommitThatWasWaitingForApprovalIsAnAnswer() {
+        var brain = working()
+        brain.handle(WorkEvent(.needsYou, session: "s", subject: "Bash:1"))
+        brain.handle(WorkEvent(.committed, session: "s", subject: "Bash:1"))
+        #expect(brain.mode == .working)
+        #expect(!brain.world.doorOpen)
+    }
+
     @Test func testsFromTheShellNeedNoSession() {
         var brain = Brain(seed: 5)
         run(&brain, for: 5)
