@@ -52,4 +52,8 @@ struct ShellLine {
     func hidesStatus(ofPieceAt index: Int) -> Bool {
         pieces[index...].dropLast().contains { $0.joiner != "&&" } || pieces.last?.joiner == "&"
     }
+
+    func mayHaveSkipped(pieceAt index: Int) -> Bool {
+        index > pieces.startIndex && pieces[index - 1].joiner == "||"
+    }
 }

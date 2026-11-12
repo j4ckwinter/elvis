@@ -51,6 +51,13 @@ import Testing
         #expect(TestRuns.verdict(command: "npm test | tail", exitStatus: 1, output: "Tests: 13 passed, 13 total") == .passed)
     }
 
+    @Test func aRunThatMayHaveBeenSkippedIsJudgedByItsOutputAlone() {
+        #expect(TestRuns.verdict(command: "test -f .skip || npm test", exitStatus: 0, output: nil) == nil)
+        #expect(TestRuns.verdict(command: "test -f .skip || npm test", exitStatus: 0, output: "") == nil)
+        #expect(TestRuns.verdict(command: "test -f .skip || npm test", exitStatus: 0, output: "Tests: 13 passed, 13 total") == .passed)
+        #expect(TestRuns.verdict(command: "test -f .skip || npm test", exitStatus: 1, output: "Tests: 1 failed, 12 passed, 13 total") == .failed)
+    }
+
     @Test func aRunnerThatNeverStartedOrWasKilledSaysNothing() {
         #expect(TestRuns.verdict(command: "pytest", exitStatus: 127, output: nil) == nil)
         #expect(TestRuns.verdict(command: "pytest", exitStatus: 130, output: nil) == nil)
@@ -74,6 +81,7 @@ import Testing
         #expect(TestRuns.verdict(command: "cd missing && npm test", exitStatus: 1, output: "(eval):cd:1: no such file or directory: missing") == nil)
         #expect(TestRuns.verdict(command: "cd missing && npm test", exitStatus: 1, output: "bash: line 1: cd: missing: No such file or directory") == nil)
         #expect(TestRuns.verdict(command: "cd app && npm test", exitStatus: 1, output: nil) == nil, "with no output there is no telling which step failed")
+        #expect(TestRuns.verdict(command: "cd missing 2>/dev/null && npm test", exitStatus: 1, output: "") == nil, "a silenced change of directory could fail without a word")
         #expect(TestRuns.verdict(command: "cd app && npm run build && npm test", exitStatus: 1, output: "error TS2304: Cannot find name 'foo'.") == nil)
         #expect(TestRuns.verdict(command: "cd app && npm test && echo done", exitStatus: 1, output: "error TS2304: Cannot find name 'foo'.") == nil)
     }

@@ -31,12 +31,12 @@ public enum TestRuns {
         let line = ShellLine(command)
         let pieces = line.pieces
         guard let index = pieces.firstIndex(where: { isTestInvocation($0.words) }) else { return nil }
-        let masked = line.hidesStatus(ofPieceAt: index)
+        let masked = line.hidesStatus(ofPieceAt: index) || line.mayHaveSkipped(pieceAt: index)
         let runsOnlyIfTheStepBeforeSucceeds = index > pieces.startIndex && pieces[index - 1].joiner == "&&"
         let isFollowedByAnotherCommand = index < pieces.endIndex - 1
         let cameFirst = pieces[..<index]
         let onlyAChangeOfDirectoryCameFirst = !isFollowedByAnotherCommand && !cameFirst.isEmpty
-            && cameFirst.allSatisfy { $0.joiner == "&&" && changesOfDirectory.contains($0.words[0]) }
+            && cameFirst.allSatisfy { $0.joiner == "&&" && isAChangeOfDirectoryThatWouldSayIfItFailed($0.words) }
         return Segment(
             statusIsMasked: masked, statusMayBeAnotherCommands: runsOnlyIfTheStepBeforeSucceeds || isFollowedByAnotherCommand,
             onlyAChangeOfDirectoryCameFirst: onlyAChangeOfDirectoryCameFirst)
@@ -165,6 +165,10 @@ public enum TestRuns {
         ]
         return matches(text, #"\b[1-9]\d*\s+(failed|failing|failures?)\b"#) || matches(text, #"\b(failed|failures?|errors?)\s*[:=]\s*[1-9]"#)
             || marks.contains(where: text.contains)
+    }
+
+    private static func isAChangeOfDirectoryThatWouldSayIfItFailed(_ words: [String]) -> Bool {
+        changesOfDirectory.contains(words[0]) && !words.contains { $0.contains(">") }
     }
 
     static func reportsAFailedChangeOfDirectory(_ output: String) -> Bool {

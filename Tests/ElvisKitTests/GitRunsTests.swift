@@ -21,7 +21,7 @@ import Testing
 
     @Test(arguments: [
         "git status", "git log --oneline", "git commit --dry-run", "git push --dry-run", "git push -n", "git push origin --delete old",
-        "git stash push", "git config push.default simple", "echo git commit", "gh pr create", "git", "git commit --help",
+        "git stash push", "git config push.default simple", "git push -nf", "git push origin :old-branch", "git push -fd origin old", "echo git commit", "gh pr create", "git", "git commit --help",
         "grep -r \"git push\" docs",
     ])
     func ignoresEverythingElse(command: String) {
@@ -39,6 +39,12 @@ import Testing
         #expect(GitRuns.deed(command: "git push || true", exitStatus: 0, output: nil) == nil)
         #expect(GitRuns.deed(command: "git push &", exitStatus: 0, output: nil) == nil)
         #expect(GitRuns.deed(command: "git commit -m x && git push | tail -3", exitStatus: 0, output: nil) == nil)
+    }
+
+    @Test func nothingIsClaimedForACommandThatMayHaveBeenSkipped() {
+        #expect(GitRuns.deed(command: "git diff --cached --quiet || git commit -m x", exitStatus: 0, output: nil) == nil)
+        #expect(GitRuns.deed(command: "git fetch || git push", exitStatus: 0, output: nil) == nil)
+        #expect(GitRuns.deed(command: "git add . || true && git commit -m x", exitStatus: 0, output: nil) == .committed)
     }
 
     @Test func aPushWithNothingToSendIsNotAPush() {
