@@ -49,34 +49,19 @@ Each decision has one owner. Put new code with the owner of the decision it make
 
 `ElvisKit` stays free of AppKit, clocks, and unseeded randomness, so that any behaviour can be reproduced in a test from a seed and a list of events. Time reaches `Brain` only through `tick`.
 
-## Write clean code
+## Standards
 
-- Name things for what they mean to Elvis or to the caller: `finish(after:)`, not `handleStopEvent2`. Rename before reaching for a comment.
-- Keep functions short enough to read in one pass, and give each one job. Split a function when its name needs "and".
-- Make the simplest change that meets the outcome. Add an abstraction only when it removes real duplication or protects an invariant that exists today.
-- Keep state narrowly owned. Prefer values and pure functions; pass in what a function needs rather than reaching for it.
-- Put a number that tunes behaviour in `Brain.Tuning` or beside the pose it shapes, with a name. Do not scatter the same threshold across files.
-- Delete code that nothing calls. Do not leave commented-out code, debug switches, or options added for a future that has not arrived.
-- Handle failure where it can be handled. Do not swallow an error that the user would need to know about.
+Jack's coding standards apply here in full. In short:
 
-## Keep each file to one responsibility
+- **One owner per decision.** Put new code with the owner in the table above, and state each fact and tuning number once. Numbers that tune behaviour live in `Brain.Tuning` or beside the pose they shape.
+- **Clean code.** Name things for what they mean to Elvis or the caller. Keep a function to one job. Make the simplest change that meets the outcome, with no abstraction, option, or switch added for a future that has not arrived. Delete what nothing calls.
+- **One responsibility per file.** When a file gains a second reason to change, split it along the owners table, as `Type+Role.swift` or a new type in a file of its own name. About 300 lines is a prompt to look, not a limit. If a split would expose most of a type's private state, the pieces are not separate.
+- **Exhaustive matches.** Keep every `switch` over `Action` free of `default`, so the compiler points at each place a new action needs handling.
+- **No comments.** Change the code until it needs none. The repository has two, each stopping a plausible wrong fix: the hook must stay silent, and a press is checked again because the window starts catching clicks a tick late. Shared conventions go in the next section, not beside each use.
+- **Behaviour tests.** Add or update a test with every behaviour change and name it for the behaviour, such as `waitsAtTheDoorUntilAnswered`. When a new test passes first time, break the code briefly to confirm it can fail. Never weaken an assertion to get a pass.
+- **Quiet over wrong.** When Elvis cannot tell how something went, he does nothing. A missed celebration costs nothing; a wag for failing tests costs trust.
 
-- A file holds one responsibility, and its name says which. When a file gains a second reason to change, split it before adding more to it.
-- Treat about 300 lines as a prompt to look, not a limit. A long file that does one thing can stay. A short file that does three cannot.
-- Split along the owners table. Put a separable role of a type in an extension file named `Type+Role.swift`, and a new type in a file of its own name.
-- Widen `private` only for the members the new file needs. If a split would expose most of a type's state, the pieces are not separate, so leave them together.
-- Keep every `switch` over `Action` exhaustive, with no `default`, so the compiler points at each place a new action needs handling.
-- A split is a `refactor` commit of its own with no behaviour change. Prove it: the tests pass unedited, and `make fingerprint` prints the same line before and after. The fingerprint hashes every pose, a long scripted run, and the pixels it paints, and takes about a minute.
-
-## Leave comments out
-
-Write code that needs no comments. Expect a handful in the whole repository, not a handful per file.
-
-- When something needs explaining, change the code until it does not: name the condition, extract and name the function, or choose a type that cannot hold the confusing state.
-- Conventions that many files share belong in the section below, not in comments beside each use.
-- A comment may stay only when it stops a reader from making a plausible wrong fix, and nothing in the code can carry the reason. The two in the repository today are of this kind: the hook must stay silent, and a press is checked again because the window starts catching clicks a tick late.
-- That rules out doc comments (`///`) that describe a type, function, parameter, or field, as well as narration, section banners, commented-out code, and TODO notes.
-- Do not add comments to tests. The test name states the behaviour.
+A refactor is a commit of its own with no behaviour change. Prove it: the tests pass unedited, and `make fingerprint` prints the same line before and after. It hashes every pose, a long scripted run, and the pixels it paints, and takes about a minute.
 
 ## Conventions the code relies on
 
@@ -107,25 +92,13 @@ ELVIS_HOME="$(mktemp -d)" ELVIS_AUTOSTART=0 plugin/bin/elvis hook < payload.json
 
 Expect no output before `exit 0`, for a valid payload and for garbage. `Tests/ElvisAppTests` makes the same check on the debug build in every `make test`; the command above checks the release binary the plugin runs.
 
-## Test what he does
-
-- Add or update a test with every behaviour change. Name it for the behaviour: `waitsAtTheDoorUntilAnswered`.
-- Test `ElvisKit` in `Tests/ElvisKitTests`. Test the command line, the hook, the socket, and starting and quitting the app in `Tests/ElvisAppTests`, which runs the built binary through `IsolatedElvis`: a temporary `ELVIS_HOME`, `ELVIS_HEADLESS` set, and `ELVIS_AUTOSTART=0` unless the test is about waking him. Never run the binary from a test any other way.
-- When a new test passes first time, break the code briefly to confirm the test can fail.
-- When he gets a result wrong, be quiet rather than guess. A missed celebration costs nothing; a wag for failing tests costs trust.
-- Never weaken an assertion or skip a test to get a pass.
-
 ## Commit as you go
 
-Commit each time a unit of work is complete and `make test` passes. Do not wait until the end of a session, and do not commit work that fails its tests.
+Committing is expected here. Commit each time a unit of work is complete and `make test` passes, before starting the next unit, and before a risky restructuring.
 
-- One logical change per commit. Keep a refactor separate from the behaviour change it enables, and a fix separate from an unrelated feature.
-- Commit before starting the next unit, and before a risky restructuring, so each step can be reviewed or reverted alone.
-- Use Conventional Commits: `type(scope): summary`, with the scope optional. Types in use are `feat`, `fix`, `refactor`, `test`, `docs`, `perf`, and `chore`. Write the summary in the imperative, under 72 characters, and say in the body why the change was needed when the summary does not.
-- Do not add `Co-Authored-By` trailers or any other line crediting an AI tool, in commit messages or pull request descriptions. Commits carry Jack's authorship only.
+- One logical change per commit, in Conventional Commits: `type(scope): summary`, imperative and under 72 characters, with a body that says why when the summary does not. Types in use are `feat`, `fix`, `refactor`, `test`, `docs`, `perf`, `build`, `ci`, and `chore`.
+- No `Co-Authored-By` trailers or any other line crediting an AI tool, in commits or pull request descriptions.
 - Stage files by name after reading `git status`. Build output, `sheets/`, and `plugin/bin/` stay out of the repository.
-- Do not amend or rebase commits that have been pushed.
+- Commit on the branch that is checked out. Do not create or switch branches unless asked, and do not amend or rebase pushed commits.
 
-Commit on the branch that is checked out. Do not create or switch branches unless asked.
-
-Committing is expected. Anything that reaches beyond this working tree needs Jack's request: pushing, opening a pull request, tagging a release, `make install`, installing the plugin into anyone's settings, and starting or quitting his running Elvis.
+Anything that reaches beyond this working tree needs Jack's request: pushing, opening a pull request, tagging a release, `make install`, installing the plugin into anyone's settings, and starting or quitting his running Elvis.
