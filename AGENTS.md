@@ -9,11 +9,14 @@ Run commands from the repository root.
 ```sh
 make            # release build, copied to plugin/bin/elvis
 make test       # the whole suite
+make restart    # rebuild, then swap the running Elvis for the new build
 make sheets     # every pose as PNGs in sheets/
 make fingerprint  # a hash of every pose, a scripted run and its pixels, for refactors
 ```
 
 Use `make test`, not `swift test`. With Command Line Tools only, the Swift Testing macros need the plugin path the Makefile supplies.
+
+Jack's installed plugin runs `plugin/bin/elvis` from this checkout, and `make`, `make sheets`, `make install`, and `make restart` all replace that file. Every Claude Code session on this Mac starts using the new hook at once. While a change to the hook path is half done, build with `swift build -c release` and run `.build/release/elvis` instead.
 
 For a change to how he looks, run `make sheets` and look at the images. A passing test suite does not show that a drawing looks right.
 
@@ -107,4 +110,4 @@ Committing is expected here. Commit each time a unit of work is complete and `ma
 - Stage files by name after reading `git status`. Build output, `sheets/`, and `plugin/bin/` stay out of the repository.
 - Commit on the branch that is checked out. Do not create or switch branches unless asked, and do not amend or rebase pushed commits.
 
-Anything that reaches beyond this working tree needs Jack's request: pushing, opening a pull request, tagging a release, `make install`, installing the plugin into anyone's settings, and starting or quitting his running Elvis.
+Anything that reaches beyond this working tree needs Jack's request: pushing, opening a pull request, tagging a release, `make install`, installing the plugin into anyone's settings, and starting, quitting, or restarting his running Elvis.

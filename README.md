@@ -30,11 +30,17 @@ For one session:
 claude --plugin-dir /path/to/elvis/plugin
 ```
 
-To keep him, register this repository as a local marketplace and install the plugin from it. These commands follow the Claude Code plugin docs as read on 2026-11-12, and the plugin was installed this way at user scope that day. The install keeps its own copy of `plugin/`, binary included, so a later `make` does not change the installed hook.
+To keep him, register this repository as a local marketplace and install the plugin from it. These commands follow the Claude Code plugin docs as read on 2026-11-12, and the plugin was installed this way at user scope that day.
 
 ```sh
 claude plugin marketplace add /path/to/elvis
 claude plugin install elvis@elvis
+```
+
+Claude Code reads a plugin from a local marketplace in place, so its hooks run `plugin/bin/elvis` from this checkout and a later `make` changes them at once. Checked on 2026-11-12 with Claude Code 2.1.322, whose debug log shows the hook command resolved to the checkout. The Elvis already on screen keeps running the build he was started from. To swap him for a new build:
+
+```sh
+make restart
 ```
 
 Once the plugin is loaded, starting or resuming a Claude Code session wakes Elvis if he is not already running. That includes headless `claude -p` runs. Set `ELVIS_AUTOSTART=0` to stop that.

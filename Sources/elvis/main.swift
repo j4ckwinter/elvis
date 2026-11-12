@@ -34,6 +34,7 @@ let usage = """
     elvis                 run Elvis in the foreground
     elvis start           wake Elvis in the background
     elvis quit            send him to bed
+    elvis restart         swap the running Elvis for this build
     elvis tell <event>    report something by hand: \(WorkEvent.Kind.allCases.map(\.rawValue).joined(separator: ", "))
     elvis demo            walk through his reactions
     elvis shell-init zsh  print shell integration for your own test runs
@@ -51,6 +52,12 @@ case "start":
 
 case "quit":
     EventSocket.send(WorkEvent(.quit))
+
+case "restart":
+    EventSocket.send(WorkEvent(.quit))
+    for _ in 0..<40 where EventSocket.isSomeoneListening { usleep(50_000) }
+    let theOldOneMayStillHoldTheLock = !wake()
+    if theOldOneMayStillHoldTheLock, !wake() { fail("could not start") }
 
 case "hook":
     // A hook must never disturb Claude Code: no output, and exit 0 whatever happens.

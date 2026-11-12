@@ -42,6 +42,21 @@ import Testing
         #expect(!FileManager.default.fileExists(atPath: elvis.socket))
     }
 
+    @Test func restartSwapsTheRunningElvisForANewOne() throws {
+        let old = try elvis.startApp()
+        try #require(eventually { elvis.isListening })
+        let restart = try elvis.run("restart")
+        #expect(restart.status == 0)
+        #expect(eventually { !old.isRunning })
+        try #require(eventually { elvis.isListening })
+        #expect(elvis.listeningProcess != old.processIdentifier)
+    }
+
+    @Test func restartStartsHimWhenHeWasNotRunning() throws {
+        #expect(try elvis.run("restart").status == 0)
+        #expect(eventually { elvis.isListening })
+    }
+
     @Test func aSessionStartWakesHimWhenNobodyIsListening() throws {
         let hook = try elvis.run("hook", input: Self.sessionStart, autostart: true)
         #expect(hook.status == 0)

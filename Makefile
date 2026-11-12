@@ -3,7 +3,7 @@ TESTING_PLUGINS := $(shell xcode-select -p)/usr/lib/swift/host/plugins/testing
 TESTING_FLAGS := $(if $(wildcard $(TESTING_PLUGINS)),-Xswiftc -plugin-path -Xswiftc $(TESTING_PLUGINS))
 PREFIX ?= $(HOME)/.local
 
-.PHONY: build test fingerprint install sheets
+.PHONY: build test fingerprint install restart sheets
 build:
 	swift build -c release
 	mkdir -p plugin/bin
@@ -18,6 +18,9 @@ fingerprint:
 install: build
 	mkdir -p $(PREFIX)/bin
 	install -m 755 .build/release/elvis $(PREFIX)/bin/elvis
+
+restart: build
+	plugin/bin/elvis restart
 
 sheets: build
 	.build/release/elvis sheets sheets
