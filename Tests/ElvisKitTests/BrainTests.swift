@@ -91,6 +91,17 @@ import Testing
         #expect(brain.mode == .waiting, "he does not give up on an unanswered prompt")
     }
 
+    @Test(arguments: ["", "elsewhere"])
+    func staysSilentAtTheDoorWhenTestsFailElsewhere(session: String) {
+        var brain = working()
+        brain.handle(WorkEvent(.taskStarted, session: "elsewhere"))
+        brain.handle(WorkEvent(.needsYou, session: "s"))
+        run(&brain, for: 12)
+        brain.handle(WorkEvent(.testsFailed, session: session))
+        #expect(brain.drainCues().isEmpty)
+        #expect(brain.mode == .waiting)
+    }
+
     @Test func aSubagentCarryingOnIsNotAnAnswer() {
         var brain = working()
         brain.handle(WorkEvent(.needsYou, session: "s", subject: "Bash:1"))

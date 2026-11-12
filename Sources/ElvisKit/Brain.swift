@@ -101,8 +101,8 @@ public struct Brain: Sendable {
 
         switch event.kind {
         case .testsFailed:
-            if !failedAgain { whine() }
             if after == .waiting { return }
+            if !failedAgain { whine() }
             react([Step(.droop, failedAgain ? 2.2 : 4.4)])
         case .testsPassed:
             if after == .waiting { return }
