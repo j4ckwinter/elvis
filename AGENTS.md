@@ -16,7 +16,7 @@ make fingerprint  # a hash of every pose, a scripted run and its pixels, for ref
 
 Use `make test`, not `swift test`. With Command Line Tools only, the Swift Testing macros need the plugin path the Makefile supplies.
 
-Jack's installed plugin runs `plugin/bin/elvis` from this checkout, and `make`, `make sheets`, `make install`, and `make restart` all replace that file. Every Claude Code session on this Mac starts using the new hook at once. While a change to the hook path is half done, build with `swift build -c release` and run `.build/release/elvis` instead.
+Jack's installed plugin runs `plugin/bin/elvis` from this checkout, and `make`, `make universal`, `make sheets`, `make install`, and `make restart` all replace that file. Every Claude Code session on this Mac starts using the new hook at once. While a change to the hook path is half done, build with `swift build -c release` and run `.build/release/elvis` instead.
 
 For a change to how he looks, run `make sheets` and look at the images. A passing test suite does not show that a drawing looks right.
 
@@ -84,7 +84,7 @@ These were once comments. Keep them true, and change them here when the code cha
 - `Brain.actionSerial` changes each time an action starts, including a repeat of the same action.
 - In `WorkEvent`, an empty `session` means the event belongs to no Claude Code session, `subject` is an opaque fingerprint that pairs a permission request with its tool call, and `agent` is set only for events from inside a subagent and for a helper going out or coming back.
 - Hook payload field names follow https://code.claude.com/docs/en/hooks.md as read on 2026-11-12. Hooks are asynchronous, so an event can arrive after its session has ended; `Sessions` ignores those.
-- `SubagentStop` also fires for agents Claude Code runs for itself, with an empty `agent_type`. Only a subagent with a type counts as a helper. A helper can outlive the turn that sent it out, so `Sessions` forgets it when it reports back, when its session ends, or when the session has been silent for `staleAfter`.
+- `SubagentStop` also fires for agents Claude Code runs for itself, with an empty `agent_type`. Only a subagent with a type counts as a helper. A helper can outlive the turn that sent it out, and one that is interrupted may never report back. `Sessions` forgets a helper when it reports back and forgets them all at the next prompt, when Claude Code reports the session idle, when the session ends, or when it has been silent for `staleAfter`. A helper still at work is counted again at its next tool call.
 - Claude Code 2.1.322 adds `gitOperation` to a Bash `tool_response`, with a `commit` key, a `push` key, or both, when the command committed or pushed. A push with nothing to send and a dry run carry neither. The hooks reference does not describe the field; it was read from real payloads on 2026-11-12. It is the only thing `ClaudeHooks` takes as proof of a commit or push, because the command text can mention one without doing it. `GitRuns` reads the command only for the shell integration, which has nothing else to go on.
 - `Brain.Tuning.staleAfter` is longer than any single tool call may run, so that much silence means the session has gone. `siblingWindow` covers tool calls that start alongside a permission request and are not an answer to it.
 - `Keepsakes.spot` is in screen points. Nil means his corner.

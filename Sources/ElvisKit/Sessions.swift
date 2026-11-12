@@ -97,7 +97,9 @@ struct Sessions: Sendable {
             session.state = .working
             session.taskStart = now
             session.pending = nil
+            session.helpers = []
         case .toolStarted:
+            if let helper = event.agent { session.helpers.insert(helper) }
             if session.state == .waiting {
                 if now - session.waitingSince >= tuning.siblingWindow, event.agent == session.pendingAgent { session.state = .working }
             } else {
@@ -132,6 +134,7 @@ struct Sessions: Sendable {
             session.state = .idle
             session.taskStart = nil
         case .sessionIdle:
+            session.helpers = []
             if session.state == .working {
                 session.state = .idle
                 session.taskStart = nil

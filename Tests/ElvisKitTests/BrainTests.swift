@@ -151,6 +151,19 @@ import Testing
         #expect(silent.company == nil)
     }
 
+    @Test func aHelperCutShortIsForgottenAtTheNextPromptAndOneStillAtWorkIsCountedAgain() {
+        var brain = working()
+        brain.handle(WorkEvent(.helperStarted, session: "s", agent: "cut-short"))
+        brain.handle(WorkEvent(.helperStarted, session: "s", agent: "in-the-background"))
+        #expect(brain.company == "1 session working, 2 helpers out")
+        brain.handle(WorkEvent(.taskStarted, session: "s"))
+        #expect(brain.company == "1 session working")
+        brain.handle(WorkEvent(.toolStarted, session: "s", flavour: .read, agent: "in-the-background"))
+        #expect(brain.company == "1 session working, 1 helper out")
+        brain.handle(WorkEvent(.sessionIdle, session: "s"))
+        #expect(brain.company == nil)
+    }
+
     @Test func stragglersFromAnEndedSessionAreIgnored() {
         var brain = working()
         brain.handle(WorkEvent(.sessionEnded, session: "s"))
