@@ -10,6 +10,7 @@ Run commands from the repository root.
 make            # release build, copied to plugin/bin/elvis
 make test       # the whole suite
 make sheets     # every pose as PNGs in sheets/
+make fingerprint  # a hash of every pose, a scripted run and its pixels, for refactors
 ```
 
 Use `make test`, not `swift test`. With Command Line Tools only, the Swift Testing macros need the plugin path the Makefile supplies.
@@ -32,10 +33,14 @@ Each decision has one owner. Put new code with the owner of the decision it make
 | --- | --- |
 | What a Claude Code hook payload means | `ClaudeHooks.swift` |
 | Whether a command was a test run, and how it went | `TestRuns.swift` |
-| What Elvis does next | `Brain.swift` |
-| The pose for an action at a moment | `Choreography.swift` |
-| Blending, ear physics, blinking, particles | `Stage.swift` |
-| Drawing | `Painter.swift`, `Dog.swift` |
+| What Claude Code's sessions are doing | `Sessions.swift` |
+| How Elvis reacts to an event, and the order he does things in | `Brain.swift` |
+| What he does when left to himself | `Brain+Habits.swift` |
+| The pose for an action at a moment | `Choreography.swift`, one `Choreography+<Family>.swift` per family of poses, `Gaits.swift` |
+| Blending between actions, ear physics, blinking | `Stage.swift` |
+| What each action scatters | `Stage+Particles.swift` |
+| Drawing Elvis | `Dog.swift`, `Dog+Head.swift` |
+| Drawing everything else | `Painter.swift` and its `Painter+<Part>.swift` files |
 | Where the yard window may rest on a screen | `Placement.swift` |
 | Windows, the menu, sound, the socket, the command line | `Sources/elvis` |
 
@@ -51,16 +56,41 @@ Each decision has one owner. Put new code with the owner of the decision it make
 - Delete code that nothing calls. Do not leave commented-out code, debug switches, or options added for a future that has not arrived.
 - Handle failure where it can be handled. Do not swallow an error that the user would need to know about.
 
+## Keep each file to one responsibility
+
+- A file holds one responsibility, and its name says which. When a file gains a second reason to change, split it before adding more to it.
+- Treat about 300 lines as a prompt to look, not a limit. A long file that does one thing can stay. A short file that does three cannot.
+- Split along the owners table. Put a separable role of a type in an extension file named `Type+Role.swift`, and a new type in a file of its own name.
+- Widen `private` only for the members the new file needs. If a split would expose most of a type's state, the pieces are not separate, so leave them together.
+- Keep every `switch` over `Action` exhaustive, with no `default`, so the compiler points at each place a new action needs handling.
+- A split is a `refactor` commit of its own with no behaviour change. Prove it: the tests pass unedited, and `make fingerprint` prints the same line before and after. The fingerprint hashes every pose, a long scripted run, and the pixels it paints, and takes about a minute.
+
 ## Leave comments out
 
-Write code that needs no comments. A comment is the exception, and it has to earn its place.
+Write code that needs no comments. Expect a handful in the whole repository, not a handful per file.
 
-- Before writing one, try a clearer name, a smaller function, or a type that makes the point. Write the comment only when all of those fail.
-- A comment may stay when it records something the code cannot express and a reader would get wrong without it: the unit or sign convention of a number, a constraint imposed by Claude Code, macOS, or a file format, or the reason for a choice that looks like a mistake.
-- Do not describe what the code does, restate a name, label sections, narrate the steps of a test, or record history. No `// MARK:` banners, no commented-out code, and no TODO notes.
-- Doc comments (`///`) follow the same rule. A type or function whose name says what it is needs none.
-- When a change makes a comment untrue, fix or delete the comment in the same commit.
-- Remove an unnecessary comment when you are already changing the code it sits on. Do not sweep other files for comments unless Jack asks for a cleanup.
+- When something needs explaining, change the code until it does not: name the condition, extract and name the function, or choose a type that cannot hold the confusing state.
+- Conventions that many files share belong in the section below, not in comments beside each use.
+- A comment may stay only when it stops a reader from making a plausible wrong fix, and nothing in the code can carry the reason. The two in the repository today are of this kind: the hook must stay silent, and a press is checked again because the window starts catching clicks a tick late.
+- That rules out doc comments (`///`) that describe a type, function, parameter, or field, as well as narration, section banners, commented-out code, and TODO notes.
+- Do not add comments to tests. The test name states the behaviour.
+
+## Conventions the code relies on
+
+These were once comments. Keep them true, and change them here when the code changes.
+
+- Geometry is in dog units, with the ground at y = 0, x growing to the right, and angles in radians. `Painter.draw` expects the context's origin at the yard's bottom-left corner with y pointing up.
+- Poses are authored facing right. `World.facing` is +1 for right and -1 for left. `Frame.facing` is the signed horizontal scale actually drawn, which passes through zero while he turns round.
+- `Pose.paws` are ordered front near, front far, rear near, rear far. `rearBend` is -1 with the hock bent back (standing) and +1 with the knee folded forward (sitting or lying). `front` above 0.5 draws the head facing the viewer. Positive `pitch` lifts the nose of the profile head; `tilt` rolls the front-facing head. `tail` is the angle above straight-back, including any wag. `turn` is a horizontal scale, swept through zero to turn on the spot.
+- `Frame.ears` are angles from straight down in the dog's own frame. A profile head uses the first.
+- `World.glum` is 1 straight after a test failure and fades to 0.
+- Everything `Painter.draw` paints must lie inside `Painter.bounds(of:)`, because the app repaints only that patch. A test enforces it.
+- Limbs and discs are drawn as stroked lines and ellipses, not as outlined paths. Outlining them roughly tripled the app's CPU use.
+- `Brain.actionSerial` changes each time an action starts, including a repeat of the same action.
+- In `WorkEvent`, an empty `session` means the event belongs to no Claude Code session, `subject` is an opaque fingerprint that pairs a permission request with its tool call, and `agent` is set only for events from inside a subagent.
+- Hook payload field names follow https://code.claude.com/docs/en/hooks.md as read on 2026-11-12. Hooks are asynchronous, so an event can arrive after its session has ended; `Sessions` ignores those.
+- `Brain.Tuning.staleAfter` is longer than any single tool call may run, so that much silence means the session has gone. `siblingWindow` covers tool calls that start alongside a permission request and are not an answer to it.
+- `Keepsakes.spot` is in screen points. Nil means his corner.
 
 ## Keep the hook harmless
 
