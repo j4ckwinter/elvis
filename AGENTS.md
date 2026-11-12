@@ -101,6 +101,12 @@ ELVIS_HOME="$(mktemp -d)" ELVIS_AUTOSTART=0 plugin/bin/elvis hook < payload.json
 
 Expect no output before `exit 0`, for a valid payload and for garbage. `Tests/ElvisAppTests` makes the same check on the debug build in every `make test`; the command above checks the release binary the plugin runs.
 
+## Release
+
+A release is a `v<version>` tag whose version matches `plugin/.claude-plugin/plugin.json`. Pushing the tag runs `.github/workflows/release.yml`. It runs the suite, builds a universal binary with `make universal`, adds a commit holding the plugin and that binary to the `release` branch, and attaches the binary to a GitHub release. `.github/publish-release-branch.sh` refuses a tag that does not match the version.
+
+People who installed from `j4ckwinter/elvis#release` stay on their copy until the version string changes, so bump it in a commit before tagging. Only that workflow writes to the `release` branch.
+
 ## Commit as you go
 
 Committing is expected here. Commit each time a unit of work is complete and `make test` passes, before starting the next unit, and before a risky restructuring.

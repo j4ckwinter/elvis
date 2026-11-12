@@ -1,0 +1,35 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: swift --version
+      - run: make test
+      - run: make universal
+      - name: Check the built hook is universal, signed, and silent
+        run: |
+          test "$(lipo -archs plugin/bin/elvis | tr ' ' '\n' | sort | xargs)" = "arm64 x86_64"
+          codesign --verify --all-architectures plugin/bin/elvis
+          test -z "$(ELVIS_HOME="$(mktemp -d)" ELVIS_AUTOSTART=0 plugin/bin/elvis hook < /dev/null 2>&1)"
+      - name: Publish the plugin with its binary on the release branch
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: .github/publish-release-branch.sh "$GITHUB_REF_NAME"
+      - name: Attach the binary to a GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          zip -j "elvis-$GITHUB_REF_NAME-macos.zip" plugin/bin/elvis
+          gh release create "$GITHUB_REF_NAME" "elvis-$GITHUB_REF_NAME-macos.zip" --title "$GITHUB_REF_NAME" --generate-notes
