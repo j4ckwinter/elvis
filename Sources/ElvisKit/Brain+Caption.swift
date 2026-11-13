@@ -58,4 +58,21 @@ extension Brain {
         if counts.helpers > 0 { parts.append("\(counts.helpers) \(counts.helpers == 1 ? "helper" : "helpers") out") }
         return parts.isEmpty ? nil : parts.joined(separator: ", ")
     }
+
+    public func report(lastHeardFromClaude secondsAgo: Double?) -> String {
+        var lines = ["Elvis \(Version.current): \(caption)"]
+        if let company { lines.append("Claude: \(company)") }
+        if let secondsAgo {
+            lines.append("Last heard from Claude Code \(Brain.ago(secondsAgo))")
+        } else {
+            lines.append("Has heard nothing from Claude Code since he woke")
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    private static func ago(_ seconds: Double) -> String {
+        if seconds < 1 { return "a moment ago" }
+        let (count, unit) = seconds < 60 ? (Int(seconds), "second") : seconds < 3600 ? (Int(seconds / 60), "minute") : (Int(seconds / 3600), "hour")
+        return "\(count) \(unit)\(count == 1 ? "" : "s") ago"
+    }
 }

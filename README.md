@@ -31,6 +31,8 @@ press on him and drag to pick him up. carry him anywhere on any display and let 
 
 the paw print in the menu bar says what he thinks he’s doing. it counts the Claude Code sessions that are working or waiting for you and the subagents they have out. it also throws a ball, turns sounds off, moves him between corners, shows his version, and quits. **Back to His Corner** sends him home.
 
+`elvis status` asks him the same thing from a terminal, and adds his version and how long ago he last heard from Claude Code. it’s the quick way to tell whether he’s hearing your session.
+
 for the tour without Claude, run `elvis demo`. it walks through his reactions in about 85 seconds. each [release](https://github.com/j4ckwinter/elvis/releases) has the binary as a zip for that. macOS quarantines a browser download, so clear it first with `xattr -d com.apple.quarantine elvis`.
 
 ## what he does
@@ -76,6 +78,8 @@ bash has no hook that hands over the line you typed, so there he reads it from t
 ## what leaves the hook
 
 the hook reads Claude Code’s payload and reduces it to an event name, the session id, a broad tool category, the id Claude Code gave a subagent, and a hash that pairs a permission request with its tool call. it writes that to a Unix socket in `~/Library/Application Support/Elvis/`. prompts, commands, file paths, and tool output go no further than the hook process. the hooks are asynchronous, print nothing, and always exit 0.
+
+`elvis status` gets back only what the menu shows, his version, and how long ago he last heard from Claude Code.
 
 `state.json` in the same directory holds the day’s mud, the two menu settings, and where you last put him down. `elvis.lock` holds the version and process id of the elvis who is running.
 

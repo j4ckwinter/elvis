@@ -60,7 +60,25 @@ enum EventSocket {
         return line.withUnsafeBytes { write(fd, $0.baseAddress, $0.count) } == line.count
     }
 
-    static func listen(deliveringOnMain deliver: @escaping (WorkEvent) -> Void) throws {
+    private static let question = Data("status?".utf8)
+
+    static func ask() -> String? {
+        guard let fd = connect() else { return nil }
+        defer { close(fd) }
+        let line = question + [0x0A]
+        guard line.withUnsafeBytes({ write(fd, $0.baseAddress, $0.count) }) == line.count else { return nil }
+        shutdown(fd, SHUT_WR)
+        var patience = timeval(tv_sec: 2, tv_usec: 0)
+        setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &patience, socklen_t(MemoryLayout<timeval>.size))
+        var answer = Data()
+        var buffer = [UInt8](repeating: 0, count: 1024)
+        while case let count = read(fd, &buffer, buffer.count), count > 0 {
+            answer.append(buffer, count: count)
+        }
+        return String(decoding: answer, as: UTF8.self)
+    }
+
+    static func listen(deliveringOnMain deliver: @escaping (WorkEvent) -> Void, answeringOnMain report: @escaping () -> String) throws {
         try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         unlink(path)
         guard var address = address(for: path) else { throw CocoaError(.fileWriteInvalidFileName) }
@@ -85,6 +103,8 @@ enum EventSocket {
                 }
                 var timeout = timeval(tv_sec: 1, tv_usec: 0)
                 setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size))
+                var on: Int32 = 1
+                setsockopt(client, SOL_SOCKET, SO_NOSIGPIPE, &on, socklen_t(MemoryLayout<Int32>.size))
                 var data = Data()
                 var buffer = [UInt8](repeating: 0, count: 1024)
                 while data.count < 8192 {
@@ -92,12 +112,15 @@ enum EventSocket {
                     if count <= 0 { break }
                     data.append(buffer, count: count)
                 }
-                close(client)
                 for line in data.split(separator: 0x0A) {
-                    if let event = WorkEvent.decode(line: Data(line)) {
+                    if line.elementsEqual(question) {
+                        let answer = Array(DispatchQueue.main.sync(execute: report).utf8)
+                        _ = write(client, answer, answer.count)
+                    } else if let event = WorkEvent.decode(line: Data(line)) {
                         DispatchQueue.main.async { deliver(event) }
                     }
                 }
+                close(client)
             }
         }
         thread.name = "elvis.events"

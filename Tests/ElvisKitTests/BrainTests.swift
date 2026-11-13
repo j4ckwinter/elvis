@@ -131,6 +131,29 @@ import Testing
         #expect(!run(&brain, for: 240).contains(.listen))
     }
 
+    @Test func reportsHisVersionWhatHeIsDoingAndWhatClaudeIsUpTo() {
+        var brain = Brain(seed: 1)
+        #expect(brain.report(lastHeardFromClaude: nil) == """
+            Elvis \(Version.current): checking you still like him
+            Has heard nothing from Claude Code since he woke
+            """)
+        brain.handle(WorkEvent(.taskStarted, session: "one"))
+        brain.handle(WorkEvent(.helperStarted, session: "one", agent: "a1"))
+        #expect(brain.report(lastHeardFromClaude: 12) == """
+            Elvis \(Version.current): \(brain.caption)
+            Claude: 1 session working, 1 helper out
+            Last heard from Claude Code 12 seconds ago
+            """)
+    }
+
+    @Test(arguments: [
+        (0.4, "a moment ago"), (1.0, "1 second ago"), (59.9, "59 seconds ago"), (60.0, "1 minute ago"),
+        (150.0, "2 minutes ago"), (3600.0, "1 hour ago"), (5 * 3600.0 + 59, "5 hours ago"),
+    ])
+    func saysHowLongAgoHeHeardFromClaude(seconds: Double, phrase: String) {
+        #expect(Brain(seed: 1).report(lastHeardFromClaude: seconds).hasSuffix("Last heard from Claude Code \(phrase)"))
+    }
+
     @Test func theMenuCountsSessionsAndHelpersWithoutNamingThem() {
         var brain = Brain(seed: 1)
         #expect(brain.company == nil)

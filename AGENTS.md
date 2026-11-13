@@ -47,6 +47,7 @@ Each decision has one owner. Put new code with the owner of the decision it make
 | What Claude Code's sessions are doing | `Sessions.swift` |
 | How Elvis reacts to an event, and the order he does things in | `Brain.swift` |
 | What he does when left to himself | `Brain+Habits.swift` |
+| What he says he is doing, in the menu and to `elvis status` | `Brain+Caption.swift` |
 | The pose for an action at a moment | `Choreography.swift`, one `Choreography+<Family>.swift` per family of poses, `Gaits.swift` |
 | Blending between actions, ear physics, blinking | `Stage.swift` |
 | What each action scatters | `Stage+Particles.swift` |
@@ -96,6 +97,7 @@ These were once comments. Keep them true, and change them here when the code cha
 - `Keepsakes.spot` is in screen points. Nil means his corner.
 - The running Elvis writes his version and process id into `elvis.lock` when he claims it, as `0.3.0 4242`. A build from before `Version.swift` writes nothing and leaves whatever an earlier Elvis left there. So a record counts as the running Elvis's own only when its process id is the one listening on the socket, and an Elvis with no record of his own counts as older than any release. A file that cannot be read says nothing either way, and he is left alone.
 - A session-start hook swaps the running Elvis for its own build only when his version is older than the hook's. An equal or newer one stays, so two installs of different versions cannot keep replacing each other. Builds of the same version are never swapped; `make restart` does that. `ELVIS_AUTOSTART=0` turns the swap off along with the wake.
+- `elvis status` sends the line `status?` over the socket and the app answers on the same connection, from the main thread, after every event that arrived before it. The answer holds his version, the two lines the menu shows, and how long ago an event with a session last arrived. The app keeps that time, not `Brain`. An Elvis from before the question existed ignores the line and closes without a word, which `elvis status` reports as no answer.
 - An Elvis who is quitting stops listening a moment before he lets go of the lock. One starting in that gap waits up to half a second for the lock, and bows out at once when somebody is listening.
 
 ## Keep the hook harmless

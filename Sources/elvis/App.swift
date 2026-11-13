@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let film = ProcessInfo.processInfo.environment["ELVIS_FILM"].map(Sheets.Film.init(directory:))
     private var lastFilmed = 0.0
     private let isHeadless = ProcessInfo.processInfo.environment["ELVIS_HEADLESS"] != nil
+    private var lastHeardFromClaude: Date?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         if keepsakes.day == Keepsakes.today {
@@ -31,7 +32,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             statusMenu = makeStatusMenu()
         }
         do {
-            try EventSocket.listen { [weak self] event in self?.receive(event) }
+            try EventSocket.listen(
+                deliveringOnMain: { [weak self] event in self?.receive(event) },
+                answeringOnMain: { [weak self] in self?.report() ?? "" })
         } catch {
             FileHandle.standardError.write(Data("elvis: could not open \(EventSocket.path): \(error)\n".utf8))
             exit(1)
@@ -131,8 +134,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.terminate(nil)
             return
         }
+        if !event.session.isEmpty { lastHeardFromClaude = Date() }
         brain.handle(event)
         runAtFullRate()
+    }
+
+    private func report() -> String {
+        brain.report(lastHeardFromClaude: lastHeardFromClaude.map { Date().timeIntervalSince($0) })
     }
 
     private func runAtFullRate() {

@@ -51,6 +51,7 @@ let usage = """
     elvis restart         swap the running Elvis for this build
     elvis tell <event>    report something by hand: \(WorkEvent.Kind.allCases.map(\.rawValue).joined(separator: ", "))
     elvis demo            walk through his reactions
+    elvis status          ask the running Elvis what he is doing
     elvis version         say which version this build is
     elvis shell-init <zsh|bash>  print shell integration for your own test runs, commits, and pushes
     elvis hook            (used by the Claude Code plugin) read a hook payload on stdin
@@ -125,6 +126,13 @@ case "demo":
         EventSocket.send(event)
         Thread.sleep(forTimeInterval: pause)
     }
+
+case "status":
+    guard EventSocket.isSomeoneListening else { fail("Elvis isn't running. Try: elvis start") }
+    guard let report = EventSocket.ask(), !report.isEmpty else {
+        fail("the running Elvis did not answer. He may be older than this build. Try: elvis restart")
+    }
+    print(report)
 
 case "version":
     print(Version.current)
