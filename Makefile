@@ -3,7 +3,7 @@ TESTING_PLUGINS := $(shell xcode-select -p)/usr/lib/swift/host/plugins/testing
 TESTING_FLAGS := $(if $(wildcard $(TESTING_PLUGINS)),-Xswiftc -plugin-path -Xswiftc $(TESTING_PLUGINS))
 PREFIX ?= $(HOME)/.local
 
-.PHONY: build universal test fingerprint install restart sheets
+.PHONY: build universal test fingerprint claude-check install restart sheets
 build:
 	swift build -c release
 	mkdir -p plugin/bin
@@ -20,6 +20,9 @@ test:
 
 fingerprint:
 	ELVIS_FINGERPRINT=1 swift test $(TESTING_FLAGS) --filter Fingerprint 2>&1 | grep -E "FINGERPRINT|error:|✘"
+
+claude-check:
+	scripts/claude-code-marks-git-work.sh
 
 install: build
 	mkdir -p $(PREFIX)/bin
