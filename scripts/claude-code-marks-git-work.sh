@@ -1,6 +1,13 @@
 #!/bin/sh
 set -eu
 
+for tool in claude jq; do
+    if ! command -v "$tool" > /dev/null; then
+        echo "this check needs $tool" >&2
+        exit 2
+    fi
+done
+
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
 
@@ -27,11 +34,15 @@ if [ -z "$(git ls-remote origin)" ]; then
     echo "the session did not push a commit, so there is nothing to read" >&2
     exit 2
 fi
+if [ ! -s "$scratch/payloads" ]; then
+    echo "Claude Code ran no hook after the commands, so there is nothing to read" >&2
+    exit 2
+fi
 
 version=$(claude --version)
 unmarked=0
 for deed in commit push; do
-    if jq -es --arg deed "$deed" 'any(.[]; .tool_response.gitOperation[$deed] != null)' "$scratch/payloads" > /dev/null 2>&1; then
+    if jq -es --arg deed "$deed" 'any(.[]; .tool_response.gitOperation[$deed] != null)' "$scratch/payloads" > /dev/null; then
         echo "$version marks a $deed"
     else
         echo "$version did not mark a $deed in tool_response.gitOperation" >&2
