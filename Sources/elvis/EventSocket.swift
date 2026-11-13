@@ -38,39 +38,12 @@ enum EventSocket {
         return fd
     }
 
-    private static var lockPath: String { directory + "/elvis.lock" }
-    private static let waitForADepartingElvisToLetGo = (tries: 10, pause: useconds_t(50_000))
-
-    static func claimSoleInstance(as version: String) -> Bool {
-        do {
-            try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
-        } catch {
-            FileHandle.standardError.write(Data("elvis: could not create \(directory): \(error)\n".utf8))
-            exit(1)
-        }
-        let lock = open(lockPath, O_CREAT | O_RDWR | O_CLOEXEC, 0o600)
-        guard lock >= 0 else { return false }
-        var triesLeft = waitForADepartingElvisToLetGo.tries
-        while flock(lock, LOCK_EX | LOCK_NB) != 0 {
-            if isSomeoneListening || triesLeft == 0 { return false }
-            usleep(waitForADepartingElvisToLetGo.pause)
-            triesLeft -= 1
-        }
-        ftruncate(lock, 0)
-        let record = Array("\(version) \(getpid())".utf8)
-        _ = write(lock, record, record.count)
-        return true
-    }
-
-    static var versionOfTheRunningElvis: String? {
+    static var listeningProcess: pid_t? {
         guard let fd = connect() else { return nil }
         defer { close(fd) }
         var listener: pid_t = 0
         var size = socklen_t(MemoryLayout<pid_t>.size)
-        guard getsockopt(fd, SOL_LOCAL, LOCAL_PEERPID, &listener, &size) == 0 else { return nil }
-        guard let record = try? String(contentsOfFile: lockPath, encoding: .utf8).split(separator: " ") else { return nil }
-        let isHisOwn = record.count >= 2 && record[1] == "\(listener)"
-        return isHisOwn ? String(record[0]) : ""
+        return getsockopt(fd, SOL_LOCAL, LOCAL_PEERPID, &listener, &size) == 0 ? listener : nil
     }
 
     static var isSomeoneListening: Bool {

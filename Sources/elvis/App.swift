@@ -199,7 +199,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 enum ElvisApp {
     static func run(detached: Bool) -> Never {
-        guard EventSocket.claimSoleInstance(as: Version.current) else {
+        guard RunningElvis.claim(as: Version.current) else {
             print("Elvis is already here.")
             exit(0)
         }

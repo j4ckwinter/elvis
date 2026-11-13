@@ -35,7 +35,7 @@ func sendTheRunningElvisToBed() -> Bool {
 }
 
 func theRunningElvisIsOlderThanThisBuild() -> Bool {
-    guard let running = EventSocket.versionOfTheRunningElvis else { return false }
+    guard let running = RunningElvis.version else { return false }
     return Version.isOlder(running, than: Version.current)
 }
 

@@ -56,6 +56,7 @@ Each decision has one owner. Put new code with the owner of the decision it make
 | Whether a press on Elvis is a pat or a pick-up, and where the yard window goes while he is carried | `PickUpGesture.swift` |
 | What each of his sounds is | `Voice.swift` |
 | Which version this build is, and whether another is older | `Version.swift` |
+| Which Elvis is the one running, and the version he put on record | `RunningElvis.swift` |
 | Windows, the menu, playing sound, the socket, the command line | `Sources/elvis` |
 
 `ElvisKit` stays free of AppKit, clocks, and unseeded randomness, so that any behaviour can be reproduced in a test from a seed and a list of events. Time reaches `Brain` only through `tick`.
