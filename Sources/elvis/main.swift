@@ -9,6 +9,14 @@ func ownPath() -> String {
     return Bundle.main.executablePath ?? given
 }
 
+func happensWithinTwoSeconds(_ happened: () -> Bool) -> Bool {
+    for _ in 0..<40 {
+        if happened() { return true }
+        usleep(50_000)
+    }
+    return happened()
+}
+
 func wake() -> Bool {
     if EventSocket.isSomeoneListening { return true }
     let process = Process()
@@ -18,21 +26,12 @@ func wake() -> Bool {
     process.standardOutput = FileHandle.nullDevice
     process.standardError = FileHandle.nullDevice
     do { try process.run() } catch { return false }
-    for _ in 0..<40 {
-        usleep(50_000)
-        if EventSocket.isSomeoneListening { return true }
-    }
-    return false
+    return happensWithinTwoSeconds { EventSocket.isSomeoneListening }
 }
 
 func sendTheRunningElvisToBed() -> Bool {
     EventSocket.send(WorkEvent(.quit))
-    var patience = 40
-    while EventSocket.isSomeoneListening, patience > 0 {
-        usleep(50_000)
-        patience -= 1
-    }
-    return !EventSocket.isSomeoneListening
+    return happensWithinTwoSeconds { !EventSocket.isSomeoneListening }
 }
 
 func theRunningElvisIsOlderThanThisBuild() -> Bool {

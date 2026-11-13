@@ -39,7 +39,7 @@ enum EventSocket {
     }
 
     private static var lockPath: String { directory + "/elvis.lock" }
-    private static let triesForADepartingElvisToLetGo = 10
+    private static let waitForADepartingElvisToLetGo = (tries: 10, pause: useconds_t(50_000))
 
     static func claimSoleInstance(as version: String) -> Bool {
         do {
@@ -50,10 +50,10 @@ enum EventSocket {
         }
         let lock = open(lockPath, O_CREAT | O_RDWR | O_CLOEXEC, 0o600)
         guard lock >= 0 else { return false }
-        var triesLeft = triesForADepartingElvisToLetGo
+        var triesLeft = waitForADepartingElvisToLetGo.tries
         while flock(lock, LOCK_EX | LOCK_NB) != 0 {
             if isSomeoneListening || triesLeft == 0 { return false }
-            usleep(50_000)
+            usleep(waitForADepartingElvisToLetGo.pause)
             triesLeft -= 1
         }
         ftruncate(lock, 0)
@@ -68,7 +68,7 @@ enum EventSocket {
         var listener: pid_t = 0
         var size = socklen_t(MemoryLayout<pid_t>.size)
         guard getsockopt(fd, SOL_LOCAL, LOCAL_PEERPID, &listener, &size) == 0 else { return nil }
-        let record = ((try? String(contentsOfFile: lockPath, encoding: .utf8)) ?? "").split(separator: " ")
+        guard let record = try? String(contentsOfFile: lockPath, encoding: .utf8).split(separator: " ") else { return nil }
         let isHisOwn = record.count >= 2 && record[1] == "\(listener)"
         return isHisOwn ? String(record[0]) : ""
     }

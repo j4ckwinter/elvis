@@ -8,7 +8,7 @@
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/elvis\" hook 2>/dev/null || true",
             "async": true,
-            "timeout": 5
+            "timeout": 10
           }
         ]
       }
