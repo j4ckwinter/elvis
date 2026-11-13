@@ -78,8 +78,12 @@ enum Sheets {
             Cell(label: "listen", action: .listen, at: 0.5, length: 1.8),
             Cell(label: "listen, other ear", action: .listen, at: 1.5, length: 1.8),
         ]
+        let inTheReadme = ["wagAtYou", "sniff", "dig", "stare", "prance", "dream"].compactMap { label in
+            postures.first { $0.label == label }
+        }
         for (name, background) in [("dark", 0x1E1F26 as UInt32), ("light", 0xF2F0EA as UInt32)] {
             try render(postures, columns: 6, background: background, to: "\(directory)/poses-\(name).png")
+            try render(inTheReadme, columns: inTheReadme.count, background: background, to: "\(directory)/readme-\(name).png")
         }
     }
 

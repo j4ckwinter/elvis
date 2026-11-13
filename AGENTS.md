@@ -20,7 +20,7 @@ Use `make test`, not `swift test`. With Command Line Tools only, the Swift Testi
 
 Jack's installed plugin runs `plugin/bin/elvis` from this checkout, and `make`, `make universal`, `make sheets`, `make install`, and `make restart` all replace that file. Every Claude Code session on this Mac starts using the new hook at once. `make install` links the `elvis` on the `PATH` to the same file instead of copying it, so a bare `elvis restart` cannot start a staler build than the hook runs. While a change to the hook path is half done, build with `swift build -c release` and run `.build/release/elvis` instead.
 
-For a change to how he looks, run `make sheets` and look at the images. A passing test suite does not show that a drawing looks right.
+For a change to how he looks, run `make sheets` and look at the images. A passing test suite does not show that a drawing looks right. The picture in the README is `sheets/readme-light.png` and `sheets/readme-dark.png`, copied to `docs/elvis-light.png` and `docs/elvis-dark.png`. Copy them again after a change to how he looks.
 
 For a change to how he behaves on screen, film a separate instance and read the contact sheets it writes:
 
