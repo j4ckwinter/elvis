@@ -87,6 +87,7 @@ These were once comments. Keep them true, and change them here when the code cha
 - `World.glum` is 1 straight after a test failure and fades to 0.
 - Everything `Painter.draw` paints must lie inside `Painter.bounds(of:)`, because the app repaints only that patch. A test enforces it.
 - Limbs and discs are drawn as stroked lines and ellipses, not as outlined paths. Outlining them roughly tripled the app's CPU use.
+- Measured on 2026-11-13 with 0.3.0 on an Apple M4 and its built-in Retina display: about 4.5% of one core while he moves at 30 frames a second, and 0.7% averaged over ten hours spent mostly asleep. Nine tenths of the moving figure was Core Animation painting him; the brain and the stage were too small to see. To repeat it, run `top -pid` and `sample` against the running app. A change that moves these numbers should say so.
 - `Brain.actionSerial` changes each time an action starts, including a repeat of the same action.
 - In `WorkEvent`, an empty `session` means the event belongs to no Claude Code session, `subject` is an opaque fingerprint that pairs a permission request with its tool call, and `agent` is set only for events from inside a subagent and for a helper going out or coming back.
 - Hook payload field names follow https://code.claude.com/docs/en/hooks.md as read on 2026-11-12. Hooks are asynchronous, so an event can arrive after its session has ended; `Sessions` ignores those.
