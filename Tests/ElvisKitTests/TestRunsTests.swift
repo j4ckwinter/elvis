@@ -10,6 +10,9 @@ import Testing
         "dotnet test", "mix test", "deno test", "npx playwright test", "make test -Xswiftc -plugin-path",
         "FOO=bar BAZ=1 pytest", "time go test ./pkg/...", "xcodebuild test -scheme App",
         "php artisan test", "php vendor/bin/phpunit",
+        "python manage.py test", "./manage.py test accounts", "uv run python manage.py test --parallel",
+        "docker compose exec app pytest", "docker compose run --rm web npm test", "docker-compose exec -T api python manage.py test",
+        "docker compose -f dev.yml exec -e CI=1 -w /srv app pytest -q",
     ])
     func recognisesTestRuns(command: String) {
         #expect(TestRuns.isTestCommand(command))
@@ -22,6 +25,9 @@ import Testing
         "make test-data", "make -C tests build", "rake db:test:prepare", "pytest --collect-only", "pytest --version",
         "cargo test --no-run", "npm run test:setup", "swift test --list-tests",
         "php artisan migrate", "php tests/seed.php",
+        "python manage.py migrate", "python manage.py runserver", "python test.py",
+        "docker compose up", "docker compose exec app bash", "docker compose logs test", "docker compose run test",
+        "docker-compose exec app", "docker compose build test",
     ])
     func ignoresEverythingElse(command: String) {
         #expect(!TestRuns.isTestCommand(command))

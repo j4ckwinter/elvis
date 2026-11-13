@@ -48,7 +48,11 @@ public enum TestRuns {
     ]
     private static let twoWordWrappers: Set<String> = [
         "uv run", "poetry run", "pipenv run", "pdm run", "hatch run", "bundle exec", "pnpm exec", "yarn exec", "npm exec",
-        "pnpm dlx", "yarn dlx", "rye run", "mise exec", "nix-shell --run", "docker-compose exec",
+        "pnpm dlx", "yarn dlx", "rye run", "mise exec", "nix-shell --run",
+    ]
+    private static let composeFlagsThatTakeAValue: Set<String> = [
+        "-f", "--file", "-p", "--project-name", "--profile", "--env-file", "--project-directory", "-e", "--env", "-u", "--user",
+        "-w", "--workdir", "--index", "--publish", "-v", "--volume", "--name", "--entrypoint",
     ]
     private static let runners: Set<String> = [
         "pytest", "py.test", "jest", "vitest", "mocha", "ava", "tap", "jasmine", "karma", "rspec", "phpunit", "pest",
@@ -74,6 +78,8 @@ public enum TestRuns {
                 words = words.dropFirst()
             } else if words.count >= 2, twoWordWrappers.contains("\(first) \(words[words.index(after: words.startIndex)])") {
                 words = words.dropFirst(2)
+            } else if let insideAService = commandRunInAComposeService(words) {
+                words = insideAService
             } else if wrappers.contains(first) {
                 words = words.dropFirst()
                 if first == "nice" || first == "caffeinate" || first == "arch" {
@@ -91,12 +97,13 @@ public enum TestRuns {
             if tool == "playwright" || tool == "cypress" { return rest.first == "test" || rest.first == "run" }
             return true
         }
+        if tool == "manage.py" { return rest.first == "test" }
         if tool.hasPrefix("python") || tool == "py" {
             let all = words.dropFirst().map { $0.lowercased() }
             if let m = all.firstIndex(of: "-m"), all.index(after: m) < all.endIndex {
                 return ["pytest", "unittest", "nose", "nose2", "tox", "nox"].contains(all[all.index(after: m)])
             }
-            return false
+            return rest.first?.hasSuffix("manage.py") == true && rest.dropFirst().first == "test"
         }
         guard let verb = rest.first else { return false }
         switch tool {
@@ -126,6 +133,29 @@ public enum TestRuns {
         default:
             return false
         }
+    }
+
+    private static func commandRunInAComposeService(_ words: ArraySlice<String>) -> ArraySlice<String>? {
+        var rest: ArraySlice<String>
+        if words.first == "docker-compose" {
+            rest = words.dropFirst()
+        } else if words.starts(with: ["docker", "compose"]) {
+            rest = words.dropFirst(2)
+        } else {
+            return nil
+        }
+        rest = droppingComposeFlags(rest)
+        guard rest.first == "exec" || rest.first == "run" else { return nil }
+        let serviceAndCommand = droppingComposeFlags(rest.dropFirst())
+        return serviceAndCommand.count > 1 ? serviceAndCommand.dropFirst() : nil
+    }
+
+    private static func droppingComposeFlags(_ words: ArraySlice<String>) -> ArraySlice<String> {
+        var rest = words
+        while let flag = rest.first, flag.hasPrefix("-") {
+            rest = rest.dropFirst(composeFlagsThatTakeAValue.contains(flag) ? 2 : 1)
+        }
+        return rest
     }
 
     private static func isTestScriptName(_ name: String) -> Bool {
