@@ -55,15 +55,6 @@ public enum TestRuns {
         "ctest", "tox", "nox", "nosetests", "behave", "cucumber", "busted", "bats", "ginkgo", "gotestsum", "nextest",
         "playwright", "cypress", "minitest", "unittest",
     ]
-    private static let toolsWithTestVerb: Set<String> = [
-        "npm", "yarn", "pnpm", "bun", "deno", "go", "cargo", "swift", "make", "gmake", "just", "task", "mvn", "mvnw",
-        "gradle", "gradlew", "dotnet", "mix", "rails", "rake", "bazel", "buck", "pants", "turbo", "nx", "lerna", "zig",
-        "stack", "cabal", "lein", "sbt", "flutter", "dart", "composer", "xcodebuild", "tuist", "elixir", "ng", "forge",
-        "hardhat", "melos", "moon", "rush", "wasm-pack", "pixi", "invoke", "artisan",
-    ]
-    private static let testVerbs: Set<String> = [
-        "test", "tests", "check", "spec", "t", "tst", "unittest", "unit", "e2e", "integration", "verify", "nextest", "ci",
-    ]
 
     private static let flagsThatRunNothing: Set<String> = [
         "--collect-only", "--co", "--version", "-V", "--help", "-h", "--no-run", "--list", "--list-tests", "--listTests",
@@ -107,7 +98,6 @@ public enum TestRuns {
             }
             return false
         }
-        guard toolsWithTestVerb.contains(tool) else { return false }
         guard let verb = rest.first else { return false }
         switch tool {
         case "npm", "yarn", "pnpm", "bun":
@@ -134,7 +124,7 @@ public enum TestRuns {
         case "xcodebuild":
             return rest.contains("test") || rest.contains("test-without-building")
         default:
-            return testVerbs.contains(verb)
+            return false
         }
     }
 
