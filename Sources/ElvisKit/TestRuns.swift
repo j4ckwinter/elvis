@@ -37,8 +37,10 @@ public enum TestRuns {
         let cameFirst = pieces[..<index]
         let onlyAChangeOfDirectoryCameFirst = !isFollowedByAnotherCommand && !cameFirst.isEmpty
             && cameFirst.allSatisfy { $0.joiner == "&&" && isAChangeOfDirectoryThatWouldSayIfItFailed($0.words) }
+        let composeMayHaveFailedBeforeTheRunnerStarted = runsInsideAComposeService(pieces[index].words)
         return Segment(
-            statusIsMasked: masked, statusMayBeAnotherCommands: runsOnlyIfTheStepBeforeSucceeds || isFollowedByAnotherCommand,
+            statusIsMasked: masked,
+            statusMayBeAnotherCommands: runsOnlyIfTheStepBeforeSucceeds || isFollowedByAnotherCommand || composeMayHaveFailedBeforeTheRunnerStarted,
             onlyAChangeOfDirectoryCameFirst: onlyAChangeOfDirectoryCameFirst)
     }
 
@@ -51,8 +53,13 @@ public enum TestRuns {
         "pnpm dlx", "yarn dlx", "rye run", "mise exec", "nix-shell --run",
     ]
     private static let composeFlagsThatTakeAValue: Set<String> = [
-        "-f", "--file", "-p", "--project-name", "--profile", "--env-file", "--project-directory", "-e", "--env", "-u", "--user",
-        "-w", "--workdir", "--index", "--publish", "-v", "--volume", "--name", "--entrypoint",
+        "-f", "--file", "-p", "--project-name", "--profile", "--env-file", "--project-directory", "--progress", "--parallel",
+        "--ansi", "-e", "--env", "-u", "--user", "-w", "--workdir", "--index", "--publish", "-v", "--volume", "--name",
+        "--cap-add", "--cap-drop", "-l", "--label", "--pull",
+    ]
+    private static let composeFlagsThatStandAlone: Set<String> = [
+        "--rm", "-T", "--no-TTY", "-i", "-t", "-it", "-ti", "--interactive", "--tty", "--no-deps", "--build", "--quiet-pull",
+        "--service-ports", "--use-aliases", "--remove-orphans", "--privileged", "--compatibility",
     ]
     private static let runners: Set<String> = [
         "pytest", "py.test", "jest", "vitest", "mocha", "ava", "tap", "jasmine", "karma", "rspec", "phpunit", "pest",
@@ -103,7 +110,7 @@ public enum TestRuns {
             if let m = all.firstIndex(of: "-m"), all.index(after: m) < all.endIndex {
                 return ["pytest", "unittest", "nose", "nose2", "tox", "nox"].contains(all[all.index(after: m)])
             }
-            return rest.first?.hasSuffix("manage.py") == true && rest.dropFirst().first == "test"
+            return rest.first?.split(separator: "/").last == "manage.py" && rest.dropFirst().first == "test"
         }
         guard let verb = rest.first else { return false }
         switch tool {
@@ -144,18 +151,30 @@ public enum TestRuns {
         } else {
             return nil
         }
-        rest = droppingComposeFlags(rest)
-        guard rest.first == "exec" || rest.first == "run" else { return nil }
-        let serviceAndCommand = droppingComposeFlags(rest.dropFirst())
+        guard let verbAndAfter = droppingComposeFlagsWeKnow(rest), verbAndAfter.first == "exec" || verbAndAfter.first == "run",
+              let serviceAndCommand = droppingComposeFlagsWeKnow(verbAndAfter.dropFirst())
+        else { return nil }
         return serviceAndCommand.count > 1 ? serviceAndCommand.dropFirst() : nil
     }
 
-    private static func droppingComposeFlags(_ words: ArraySlice<String>) -> ArraySlice<String> {
+    private static func droppingComposeFlagsWeKnow(_ words: ArraySlice<String>) -> ArraySlice<String>? {
         var rest = words
         while let flag = rest.first, flag.hasPrefix("-") {
-            rest = rest.dropFirst(composeFlagsThatTakeAValue.contains(flag) ? 2 : 1)
+            let name = String(flag.prefix { $0 != "=" })
+            let carriesItsValue = name != flag
+            if composeFlagsThatTakeAValue.contains(name) {
+                rest = rest.dropFirst(carriesItsValue ? 1 : 2)
+            } else if composeFlagsThatStandAlone.contains(flag) {
+                rest = rest.dropFirst()
+            } else {
+                return nil
+            }
         }
         return rest
+    }
+
+    private static func runsInsideAComposeService(_ words: [String]) -> Bool {
+        words.contains("docker-compose") || zip(words, words.dropFirst()).contains { $0 == "docker" && $1 == "compose" }
     }
 
     private static func isTestScriptName(_ name: String) -> Bool {

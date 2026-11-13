@@ -13,6 +13,7 @@ import Testing
         "python manage.py test", "./manage.py test accounts", "uv run python manage.py test --parallel",
         "docker compose exec app pytest", "docker compose run --rm web npm test", "docker-compose exec -T api python manage.py test",
         "docker compose -f dev.yml exec -e CI=1 -w /srv app pytest -q",
+        "docker compose run --pull always web pytest", "docker compose --progress plain exec --user=root app pytest",
     ])
     func recognisesTestRuns(command: String) {
         #expect(TestRuns.isTestCommand(command))
@@ -28,6 +29,10 @@ import Testing
         "python manage.py migrate", "python manage.py runserver", "python test.py",
         "docker compose up", "docker compose exec app bash", "docker compose logs test", "docker compose run test",
         "docker-compose exec app", "docker compose build test",
+        "docker compose exec -d app pytest", "docker compose run --detach --rm web npm test",
+        "docker compose run --rm --entrypoint sh web pytest", "docker compose run --entrypoint=sh web pytest",
+        "docker compose run --cap-add SYS_PTRACE pytest sh", "docker compose run -l team=core jest bash",
+        "docker compose run --a-flag-from-the-future value web pytest", "python notmanage.py test",
     ])
     func ignoresEverythingElse(command: String) {
         #expect(!TestRuns.isTestCommand(command))
@@ -113,6 +118,15 @@ import Testing
         #expect(TestRuns.verdict(command: "npm test | tail", exitStatus: 0, output: "GET /x 500 error\nTests: 5 passed, 5 total") == nil)
         #expect(TestRuns.verdict(command: "pytest | tail", exitStatus: 0, output: "===== 2 passed, 1 error in 0.3s =====") == nil)
         #expect(TestRuns.verdict(command: "go test ./... | tail -2", exitStatus: 0, output: "ok  \tpkg/a\t0.2s\nFAIL") == .failed)
+    }
+
+    @Test func aFailureInsideAComposeServiceIsTheTestsOnlyWhenTheOutputSaysSo() {
+        let inside = "docker compose exec app pytest"
+        #expect(TestRuns.verdict(command: inside, exitStatus: 0, output: nil) == .passed)
+        #expect(TestRuns.verdict(command: inside, exitStatus: 1, output: "===== 2 failed, 3 passed in 0.4s =====") == .failed)
+        #expect(TestRuns.verdict(command: inside, exitStatus: 1, output: "service \"app\" is not running") == nil)
+        #expect(TestRuns.verdict(command: inside, exitStatus: 1, output: nil) == nil, "your own shell passes no output, so there is no telling")
+        #expect(TestRuns.verdict(command: "CI=1 docker-compose run --rm web npm test", exitStatus: 1, output: "Cannot connect to the Docker daemon") == nil)
     }
 
     @Test func redirectsAreNotPipes() {
