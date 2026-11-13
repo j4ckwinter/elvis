@@ -23,7 +23,7 @@ start or resume a Claude Code session and he wakes up. that includes headless `c
 
 when the plugin updates, the next session you start swaps him for the new build. `ELVIS_AUTOSTART=0` turns that off too.
 
-GitHub Actions builds each `v*` tag into a universal binary and publishes it with the plugin on the `release` branch. the install was tested on Apple silicon for 0.2.0; the Intel half has only printed its help under Rosetta. want to build him instead? see [build him yourself](#build-him-yourself).
+GitHub Actions builds each `v*` tag into a universal binary and publishes it with the plugin on the `release` branch. the install was tested for 0.4.0, on Apple silicon and with the Intel half under Rosetta. want to build him instead? see [build him yourself](#build-him-yourself).
 
 ## say hello
 
