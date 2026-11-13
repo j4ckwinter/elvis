@@ -44,7 +44,7 @@ public enum TestRuns {
 
     private static let changesOfDirectory: Set<String> = ["cd", "pushd"]
     private static let wrappers: Set<String> = [
-        "time", "sudo", "command", "exec", "nice", "env", "caffeinate", "npx", "bunx", "pnpx", "dotenv", "arch", "xcrun",
+        "time", "sudo", "command", "exec", "nice", "env", "caffeinate", "npx", "bunx", "pnpx", "dotenv", "arch", "xcrun", "php",
     ]
     private static let twoWordWrappers: Set<String> = [
         "uv run", "poetry run", "pipenv run", "pdm run", "hatch run", "bundle exec", "pnpm exec", "yarn exec", "npm exec",
