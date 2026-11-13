@@ -6,7 +6,7 @@
 </picture>
 
 i miss my best mate. so i built him a spot in the corner of my screen.
-elvis is a small black sprocker who lives above the Dock and reacts to whatever Claude Code is doing. he’s eager, he wants you to be pleased with him, and he’s not very bright.
+elvis is a small black sprocker who lives above the Dock and reacts to whatever Claude Code is doing. he’s eager and he wants you to be pleased with him.
 
 he draws in a transparent strip and never takes focus. clicks pass straight through everywhere except on elvis himself.
 
