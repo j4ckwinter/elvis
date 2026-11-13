@@ -10,13 +10,14 @@ Run commands from the repository root.
 make            # release build, copied to plugin/bin/elvis
 make test       # the whole suite
 make restart    # rebuild, then swap the running Elvis for the new build
+make install    # rebuild, then link ~/.local/bin/elvis to plugin/bin/elvis
 make sheets     # every pose as PNGs in sheets/
 make fingerprint  # a hash of every pose, a scripted run and its pixels, for refactors
 ```
 
 Use `make test`, not `swift test`. With Command Line Tools only, the Swift Testing macros need the plugin path the Makefile supplies.
 
-Jack's installed plugin runs `plugin/bin/elvis` from this checkout, and `make`, `make universal`, `make sheets`, `make install`, and `make restart` all replace that file. Every Claude Code session on this Mac starts using the new hook at once. While a change to the hook path is half done, build with `swift build -c release` and run `.build/release/elvis` instead.
+Jack's installed plugin runs `plugin/bin/elvis` from this checkout, and `make`, `make universal`, `make sheets`, `make install`, and `make restart` all replace that file. Every Claude Code session on this Mac starts using the new hook at once. `make install` links the `elvis` on the `PATH` to the same file instead of copying it, so a bare `elvis restart` cannot start a staler build than the hook runs. While a change to the hook path is half done, build with `swift build -c release` and run `.build/release/elvis` instead.
 
 For a change to how he looks, run `make sheets` and look at the images. A passing test suite does not show that a drawing looks right.
 

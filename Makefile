@@ -23,7 +23,7 @@ fingerprint:
 
 install: build
 	mkdir -p $(PREFIX)/bin
-	install -m 755 .build/release/elvis $(PREFIX)/bin/elvis
+	ln -sf "$(CURDIR)/plugin/bin/elvis" $(PREFIX)/bin/elvis
 
 restart: build
 	plugin/bin/elvis restart
