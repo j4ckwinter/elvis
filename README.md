@@ -1,8 +1,8 @@
 # elvis
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/elvis-dark.png">
-  <img src="docs/elvis-light.png" alt="elvis wagging, following a scent, digging, waiting at the door, carrying a ball, and dreaming of one">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/elvis-dark.gif">
+  <img src="docs/elvis-light.gif" alt="elvis wags, bounds up, chases his tail, follows a scent, digs, fetches a ball, and sits there looking proud">
 </picture>
 
 i miss my best mate. so i built him a spot in the corner of my screen.
@@ -118,7 +118,7 @@ to work on him:
 
 ```sh
 make test           # logic, hook translation, test-run detection, a drawing smoke test, and the built binary
-make sheets         # renders every pose to sheets/poses-dark.png and sheets/poses-light.png
+make sheets         # renders every pose, and the film at the top of this page, into sheets/
 make claude-check   # has a real Claude Code session commit and push, and checks he would hear of both
 ELVIS_HOME="$(mktemp -d)" ELVIS_FILM=/some/dir .build/release/elvis run   # films a second elvis as contact sheets
 ```
