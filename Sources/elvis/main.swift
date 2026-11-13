@@ -21,7 +21,6 @@ func wake() -> Bool {
     for _ in 0..<40 {
         usleep(50_000)
         if EventSocket.isSomeoneListening { return true }
-        if !process.isRunning { return EventSocket.isSomeoneListening }
     }
     return false
 }
@@ -36,13 +35,9 @@ func sendTheRunningElvisToBed() -> Bool {
     return !EventSocket.isSomeoneListening
 }
 
-func wakeInHisPlace() -> Bool {
-    let theOldOneMayStillHoldTheLock = !wake()
-    return !theOldOneMayStillHoldTheLock || wake()
-}
-
 func theRunningElvisIsOlderThanThisBuild() -> Bool {
-    EventSocket.isSomeoneListening && Version.isOlder(EventSocket.versionOfTheRunningElvis, than: Version.current)
+    guard let running = EventSocket.versionOfTheRunningElvis else { return false }
+    return Version.isOlder(running, than: Version.current)
 }
 
 func fail(_ message: String) -> Never {
@@ -76,14 +71,14 @@ case "quit":
 
 case "restart":
     if !sendTheRunningElvisToBed() { fail("the running Elvis did not quit") }
-    if !wakeInHisPlace() { fail("could not start") }
+    if !wake() { fail("could not start") }
 
 case "hook":
     // A hook must never disturb Claude Code: no output, and exit 0 whatever happens.
     let payload = FileHandle.standardInput.readDataToEndOfFile()
     guard let event = ClaudeHooks.event(fromPayload: payload) else { exit(0) }
     let mayStartHim = event.kind == .sessionStarted && ProcessInfo.processInfo.environment["ELVIS_AUTOSTART"] != "0"
-    if mayStartHim, theRunningElvisIsOlderThanThisBuild(), sendTheRunningElvisToBed() { _ = wakeInHisPlace() }
+    if mayStartHim, theRunningElvisIsOlderThanThisBuild() { _ = sendTheRunningElvisToBed() }
     if !EventSocket.send(event), mayStartHim, wake() { EventSocket.send(event) }
     exit(0)
 

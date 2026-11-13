@@ -77,7 +77,7 @@ bash has no hook that hands over the line you typed, so there he reads it from t
 
 the hook reads Claude Code’s payload and reduces it to an event name, the session id, a broad tool category, the id Claude Code gave a subagent, and a hash that pairs a permission request with its tool call. it writes that to a Unix socket in `~/Library/Application Support/Elvis/`. prompts, commands, file paths, and tool output go no further than the hook process. the hooks are asynchronous, print nothing, and always exit 0.
 
-`state.json` in the same directory holds the day’s mud, the two menu settings, and where you last put him down. `elvis.lock` holds the version of the elvis who is running.
+`state.json` in the same directory holds the day’s mud, the two menu settings, and where you last put him down. `elvis.lock` holds the version and process id of the elvis who is running.
 
 ## build him yourself
 
