@@ -4,6 +4,7 @@ import Testing
 
 @Suite struct AppLifecycleTests {
     private static let sessionStart = #"{"hook_event_name":"SessionStart","session_id":"s-1","source":"startup"}"#
+    private static let prompt = #"{"hook_event_name":"UserPromptSubmit","session_id":"s-1","prompt":"hello"}"#
     private static let pluginManifest = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         .appendingPathComponent("plugin/.claude-plugin/plugin.json")
@@ -90,5 +91,58 @@ import Testing
         try elvis.startApp()
         try #require(eventually { elvis.isListening })
         #expect(try elvis.versionOnRecord + "\n" == elvis.run("version").output)
+    }
+
+    @Test(arguments: ["0.0.1", ""])
+    func aSessionStartSwapsAnOlderElvisForTheHooksBuild(olderVersion: String) throws {
+        let old = try elvis.startApp()
+        try #require(eventually { elvis.isListening })
+        try elvis.putOnRecord(version: olderVersion)
+        let hook = try elvis.run("hook", input: Self.sessionStart, autostart: true)
+        #expect(hook.status == 0)
+        #expect(hook.wasSilent)
+        #expect(eventually { !old.isRunning })
+        try #require(eventually { elvis.isListening })
+        #expect(elvis.listeningProcess != old.processIdentifier)
+        #expect(try elvis.versionOnRecord + "\n" == elvis.run("version").output)
+    }
+
+    @Test func aSessionStartLeavesAnElvisOfTheSameVersionRunning() throws {
+        let app = try elvis.startApp()
+        try #require(eventually { elvis.isListening })
+        let hook = try elvis.run("hook", input: Self.sessionStart, autostart: true)
+        #expect(hook.wasSilent)
+        #expect(app.isRunning)
+        #expect(elvis.listeningProcess == app.processIdentifier)
+    }
+
+    @Test func aSessionStartLeavesANewerElvisRunning() throws {
+        let app = try elvis.startApp()
+        try #require(eventually { elvis.isListening })
+        try elvis.putOnRecord(version: "999.0.0")
+        let hook = try elvis.run("hook", input: Self.sessionStart, autostart: true)
+        #expect(hook.wasSilent)
+        #expect(app.isRunning)
+        #expect(elvis.listeningProcess == app.processIdentifier)
+    }
+
+    @Test func anOlderElvisIsLeftRunningWhenAutostartIsOff() throws {
+        let app = try elvis.startApp()
+        try #require(eventually { elvis.isListening })
+        try elvis.putOnRecord(version: "0.0.1")
+        let hook = try elvis.run("hook", input: Self.sessionStart)
+        #expect(hook.wasSilent)
+        #expect(app.isRunning)
+        #expect(elvis.listeningProcess == app.processIdentifier)
+    }
+
+    @Test func onlyASessionStartSwapsAnOlderElvis() throws {
+        let app = try elvis.startApp()
+        try #require(eventually { elvis.isListening })
+        try elvis.putOnRecord(version: "0.0.1")
+        let hook = try elvis.run("hook", input: Self.prompt, autostart: true)
+        #expect(hook.wasSilent)
+        #expect(app.isRunning)
+        #expect(elvis.listeningProcess == app.processIdentifier)
     }
 }

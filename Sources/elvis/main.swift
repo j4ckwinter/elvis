@@ -21,8 +21,28 @@ func wake() -> Bool {
     for _ in 0..<40 {
         usleep(50_000)
         if EventSocket.isSomeoneListening { return true }
+        if !process.isRunning { return EventSocket.isSomeoneListening }
     }
     return false
+}
+
+func sendTheRunningElvisToBed() -> Bool {
+    EventSocket.send(WorkEvent(.quit))
+    var patience = 40
+    while EventSocket.isSomeoneListening, patience > 0 {
+        usleep(50_000)
+        patience -= 1
+    }
+    return !EventSocket.isSomeoneListening
+}
+
+func wakeInHisPlace() -> Bool {
+    let theOldOneMayStillHoldTheLock = !wake()
+    return !theOldOneMayStillHoldTheLock || wake()
+}
+
+func theRunningElvisIsOlderThanThisBuild() -> Bool {
+    EventSocket.isSomeoneListening && Version.isOlder(EventSocket.versionOfTheRunningElvis, than: Version.current)
 }
 
 func fail(_ message: String) -> Never {
@@ -55,23 +75,16 @@ case "quit":
     EventSocket.send(WorkEvent(.quit))
 
 case "restart":
-    EventSocket.send(WorkEvent(.quit))
-    var patience = 40
-    while EventSocket.isSomeoneListening, patience > 0 {
-        usleep(50_000)
-        patience -= 1
-    }
-    if EventSocket.isSomeoneListening { fail("the running Elvis did not quit") }
-    let theOldOneMayStillHoldTheLock = !wake()
-    if theOldOneMayStillHoldTheLock, !wake() { fail("could not start") }
+    if !sendTheRunningElvisToBed() { fail("the running Elvis did not quit") }
+    if !wakeInHisPlace() { fail("could not start") }
 
 case "hook":
     // A hook must never disturb Claude Code: no output, and exit 0 whatever happens.
     let payload = FileHandle.standardInput.readDataToEndOfFile()
     guard let event = ClaudeHooks.event(fromPayload: payload) else { exit(0) }
-    if !EventSocket.send(event), event.kind == .sessionStarted, ProcessInfo.processInfo.environment["ELVIS_AUTOSTART"] != "0" {
-        if wake() { EventSocket.send(event) }
-    }
+    let mayStartHim = event.kind == .sessionStarted && ProcessInfo.processInfo.environment["ELVIS_AUTOSTART"] != "0"
+    if mayStartHim, theRunningElvisIsOlderThanThisBuild(), sendTheRunningElvisToBed() { _ = wakeInHisPlace() }
+    if !EventSocket.send(event), mayStartHim, wake() { EventSocket.send(event) }
     exit(0)
 
 case "tell":

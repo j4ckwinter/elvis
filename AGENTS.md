@@ -91,11 +91,12 @@ These were once comments. Keep them true, and change them here when the code cha
 - `Brain.Tuning.staleAfter` is longer than any single tool call may run, so that much silence means the session has gone. `siblingWindow` covers tool calls that start alongside a permission request and are not an answer to it.
 - zsh hands `preexec` the line that was typed. Bash does not, so the bash integration takes the line from `history 1` inside a `DEBUG` trap and keeps it only when the history entry is new and starts with the same word as `BASH_COMMAND`, or is unchanged and equals `BASH_COMMAND`. That second case is a repeat that `HISTCONTROL` did not record again. `Tests/ElvisAppTests/ShellIntegrationTests.swift` types into the real `/bin/zsh` and `/bin/bash`.
 - `Keepsakes.spot` is in screen points. Nil means his corner.
-- The running Elvis writes his version into `elvis.lock` when he claims it. An Elvis built before `Version.swift` existed leaves the file empty.
+- The running Elvis writes his version into `elvis.lock` when he claims it. An Elvis built before `Version.swift` existed leaves the file empty, which counts as older than any release.
+- A session-start hook swaps the running Elvis for its own build only when his recorded version is older than the hook's. An equal or newer one stays, so two installs of different versions cannot keep replacing each other. Builds of the same version are never swapped; `make restart` does that. `ELVIS_AUTOSTART=0` turns the swap off along with the wake.
 
 ## Keep the hook harmless
 
-The hook runs inside the user's Claude Code session on every event. It must print nothing and exit 0 whatever happens. It returns in milliseconds, except on a session start that has to launch the app, where it waits up to two seconds for the app to listen. Only the fields of `WorkEvent` may cross the socket. A prompt, command, path, or tool output must never leave the hook process.
+The hook runs inside the user's Claude Code session on every event. It must print nothing and exit 0 whatever happens. It returns in milliseconds, except on a session start that has to launch the app or swap an older Elvis for its own build. Launching waits up to two seconds for the app to listen. A swap also waits up to two seconds for the old one to quit, and stays inside the five-second timeout in `plugin/hooks/hooks.json`. Only the fields of `WorkEvent` may cross the socket. A prompt, command, path, or tool output must never leave the hook process.
 
 The hook path is `ClaudeHooks.swift`, `WorkEvent.swift`, `EventSocket.swift`, the `hook` case in `Sources/elvis/main.swift`, and `plugin/hooks/hooks.json`. A change to the two ElvisKit files needs a test. After any change to the path, confirm the built hook is still silent without touching the running app:
 

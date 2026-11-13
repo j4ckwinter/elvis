@@ -80,6 +80,10 @@ final class IsolatedElvis {
 
     var binary: String { Self.builtBinary.path }
 
+    func putOnRecord(version: String) throws {
+        try version.write(toFile: home + "/elvis.lock", atomically: false, encoding: .utf8)
+    }
+
     @discardableResult
     func startApp() throws -> Process {
         let app = command(["run"], autostart: false)
