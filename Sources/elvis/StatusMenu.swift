@@ -23,7 +23,7 @@ final class StatusMenu: NSObject, NSMenuDelegate {
     private let currentStatus: () -> Status
     private let choices: Choices
 
-    init(status: @escaping () -> Status, choices: Choices) {
+    init(version: String, status: @escaping () -> Status, choices: Choices) {
         self.currentStatus = status
         self.choices = choices
         super.init()
@@ -45,6 +45,7 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         cornerItem.target = self
         menu.addItem(cornerItem)
         menu.addItem(.separator())
+        menu.addItem(withTitle: "Version \(version)", action: nil, keyEquivalent: "").isEnabled = false
         menu.addItem(withTitle: "Quit Elvis", action: #selector(quit), keyEquivalent: "").target = self
         statusItem.menu = menu
     }

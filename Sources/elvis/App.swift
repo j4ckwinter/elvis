@@ -172,6 +172,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func makeStatusMenu() -> StatusMenu {
         StatusMenu(
+            version: Version.current,
             status: { [unowned self] in
                 StatusMenu.Status(
                     caption: self.brain.caption, company: self.brain.company, soundsAreOn: self.keepsakes.sounds, isInHisCorner: self.keepsakes.spot == nil)
@@ -198,7 +199,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 enum ElvisApp {
     static func run(detached: Bool) -> Never {
-        guard EventSocket.claimSoleInstance() else {
+        guard EventSocket.claimSoleInstance(as: Version.current) else {
             print("Elvis is already here.")
             exit(0)
         }

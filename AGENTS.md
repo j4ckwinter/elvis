@@ -53,6 +53,7 @@ Each decision has one owner. Put new code with the owner of the decision it make
 | Where the yard window may rest on a screen | `Placement.swift` |
 | Whether a press on Elvis is a pat or a pick-up, and where the yard window goes while he is carried | `PickUpGesture.swift` |
 | What each of his sounds is | `Voice.swift` |
+| Which version this build is, and whether another is older | `Version.swift` |
 | Windows, the menu, playing sound, the socket, the command line | `Sources/elvis` |
 
 `ElvisKit` stays free of AppKit, clocks, and unseeded randomness, so that any behaviour can be reproduced in a test from a seed and a list of events. Time reaches `Brain` only through `tick`.
@@ -90,6 +91,7 @@ These were once comments. Keep them true, and change them here when the code cha
 - `Brain.Tuning.staleAfter` is longer than any single tool call may run, so that much silence means the session has gone. `siblingWindow` covers tool calls that start alongside a permission request and are not an answer to it.
 - zsh hands `preexec` the line that was typed. Bash does not, so the bash integration takes the line from `history 1` inside a `DEBUG` trap and keeps it only when the history entry is new and starts with the same word as `BASH_COMMAND`, or is unchanged and equals `BASH_COMMAND`. That second case is a repeat that `HISTCONTROL` did not record again. `Tests/ElvisAppTests/ShellIntegrationTests.swift` types into the real `/bin/zsh` and `/bin/bash`.
 - `Keepsakes.spot` is in screen points. Nil means his corner.
+- The running Elvis writes his version into `elvis.lock` when he claims it. An Elvis built before `Version.swift` existed leaves the file empty.
 
 ## Keep the hook harmless
 
@@ -107,7 +109,7 @@ Expect no output before `exit 0`, for a valid payload and for garbage. `Tests/El
 
 A release is a `v<version>` tag whose version matches `plugin/.claude-plugin/plugin.json`. Pushing the tag runs `.github/workflows/release.yml`. It runs the suite, builds a universal binary with `make universal`, adds a commit holding the plugin, that binary, and the licence to the `release` branch, and attaches the binary to a GitHub release. `.github/publish-release-branch.sh` refuses a tag that does not match the version.
 
-People who installed from `j4ckwinter/elvis#release` stay on their copy until the version string changes, so bump it in a commit before tagging. Only that workflow writes to the `release` branch.
+People who installed from `j4ckwinter/elvis#release` stay on their copy until the version string changes, so bump it in a commit before tagging. The version is stated twice, because Claude Code reads one and the binary carries the other: `plugin/.claude-plugin/plugin.json` and `Version.current`. Change both; a test fails while they differ. Only that workflow writes to the `release` branch.
 
 ## Commit as you go
 

@@ -38,15 +38,26 @@ enum EventSocket {
         return fd
     }
 
-    static func claimSoleInstance() -> Bool {
+    private static var lockPath: String { directory + "/elvis.lock" }
+
+    static func claimSoleInstance(as version: String) -> Bool {
         do {
             try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         } catch {
             FileHandle.standardError.write(Data("elvis: could not create \(directory): \(error)\n".utf8))
             exit(1)
         }
-        let lock = open(directory + "/elvis.lock", O_CREAT | O_RDWR | O_CLOEXEC, 0o600)
-        return lock >= 0 && flock(lock, LOCK_EX | LOCK_NB) == 0
+        let lock = open(lockPath, O_CREAT | O_RDWR | O_CLOEXEC, 0o600)
+        guard lock >= 0, flock(lock, LOCK_EX | LOCK_NB) == 0 else { return false }
+        ftruncate(lock, 0)
+        let record = Array(version.utf8)
+        _ = write(lock, record, record.count)
+        return true
+    }
+
+    static var versionOfTheRunningElvis: String {
+        let record = (try? String(contentsOfFile: lockPath, encoding: .utf8)) ?? ""
+        return record.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     static var isSomeoneListening: Bool {

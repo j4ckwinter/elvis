@@ -36,6 +36,7 @@ final class IsolatedElvis {
     var socket: String { home + "/elvis.sock" }
     var isListening: Bool { UnixSocket.isAccepting(at: socket) }
     var listeningProcess: pid_t? { UnixSocket.processListening(at: socket) }
+    var versionOnRecord: String { (try? String(contentsOfFile: home + "/elvis.lock", encoding: .utf8)) ?? "" }
     var homeIsEmpty: Bool { (try? FileManager.default.contentsOfDirectory(atPath: home))?.isEmpty == true }
 
     @discardableResult

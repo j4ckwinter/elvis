@@ -4,6 +4,9 @@ import Testing
 
 @Suite struct AppLifecycleTests {
     private static let sessionStart = #"{"hook_event_name":"SessionStart","session_id":"s-1","source":"startup"}"#
+    private static let pluginManifest = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        .appendingPathComponent("plugin/.claude-plugin/plugin.json")
     private let elvis: IsolatedElvis
 
     init() throws {
@@ -73,5 +76,19 @@ import Testing
         #expect(hook.wasSilent)
         #expect(!elvis.isListening)
         #expect(elvis.homeIsEmpty)
+    }
+
+    @Test func saysTheVersionThePluginCarries() throws {
+        let manifest = try JSONSerialization.jsonObject(with: Data(contentsOf: Self.pluginManifest)) as? [String: Any]
+        let carried = try #require(manifest?["version"] as? String)
+        let version = try elvis.run("version")
+        #expect(version.status == 0)
+        #expect(version.output == carried + "\n")
+    }
+
+    @Test func putsHisVersionOnRecordOnceStarted() throws {
+        try elvis.startApp()
+        try #require(eventually { elvis.isListening })
+        #expect(try elvis.versionOnRecord + "\n" == elvis.run("version").output)
     }
 }

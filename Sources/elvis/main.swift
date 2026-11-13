@@ -37,6 +37,7 @@ let usage = """
     elvis restart         swap the running Elvis for this build
     elvis tell <event>    report something by hand: \(WorkEvent.Kind.allCases.map(\.rawValue).joined(separator: ", "))
     elvis demo            walk through his reactions
+    elvis version         say which version this build is
     elvis shell-init <zsh|bash>  print shell integration for your own test runs, commits, and pushes
     elvis hook            (used by the Claude Code plugin) read a hook payload on stdin
     elvis ran <status> <command>  (used by shell integration)
@@ -117,6 +118,9 @@ case "demo":
         EventSocket.send(event)
         Thread.sleep(forTimeInterval: pause)
     }
+
+case "version":
+    print(Version.current)
 
 case "sheets":
     try Sheets.write(to: arguments.count > 1 ? arguments[1] : "sheets")
