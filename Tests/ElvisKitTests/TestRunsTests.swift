@@ -127,6 +127,9 @@ import Testing
         #expect(TestRuns.verdict(command: inside, exitStatus: 1, output: "service \"app\" is not running") == nil)
         #expect(TestRuns.verdict(command: inside, exitStatus: 1, output: nil) == nil, "your own shell passes no output, so there is no telling")
         #expect(TestRuns.verdict(command: "CI=1 docker-compose run --rm web npm test", exitStatus: 1, output: "Cannot connect to the Docker daemon") == nil)
+        #expect(TestRuns.verdict(command: "cd api && docker compose exec app pytest", exitStatus: 1, output: "service \"app\" is not running") == nil)
+        #expect(TestRuns.verdict(command: "cd api && docker compose exec app pytest", exitStatus: 1, output: "===== 1 failed in 0.2s =====") == .failed)
+        #expect(TestRuns.verdict(command: "cd api && docker compose exec app pytest", exitStatus: 0, output: nil) == .passed)
     }
 
     @Test func redirectsAreNotPipes() {

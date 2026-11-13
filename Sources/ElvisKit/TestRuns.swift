@@ -35,9 +35,9 @@ public enum TestRuns {
         let runsOnlyIfTheStepBeforeSucceeds = index > pieces.startIndex && pieces[index - 1].joiner == "&&"
         let isFollowedByAnotherCommand = index < pieces.endIndex - 1
         let cameFirst = pieces[..<index]
-        let onlyAChangeOfDirectoryCameFirst = !isFollowedByAnotherCommand && !cameFirst.isEmpty
-            && cameFirst.allSatisfy { $0.joiner == "&&" && isAChangeOfDirectoryThatWouldSayIfItFailed($0.words) }
         let composeMayHaveFailedBeforeTheRunnerStarted = runsInsideAComposeService(pieces[index].words)
+        let onlyAChangeOfDirectoryCameFirst = !isFollowedByAnotherCommand && !cameFirst.isEmpty && !composeMayHaveFailedBeforeTheRunnerStarted
+            && cameFirst.allSatisfy { $0.joiner == "&&" && isAChangeOfDirectoryThatWouldSayIfItFailed($0.words) }
         return Segment(
             statusIsMasked: masked,
             statusMayBeAnotherCommands: runsOnlyIfTheStepBeforeSucceeds || isFollowedByAnotherCommand || composeMayHaveFailedBeforeTheRunnerStarted,
