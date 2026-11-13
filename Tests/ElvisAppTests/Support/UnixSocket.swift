@@ -16,6 +16,29 @@ enum UnixSocket {
         return getsockopt(connection, SOL_LOCAL, LOCAL_PEERPID, &process, &size) == 0 ? process : nil
     }
 
+    static func sayAndHangUp(_ line: String, at path: String) -> Bool {
+        guard let connection = connect(to: path) else { return false }
+        defer { close(connection) }
+        let bytes = Array((line + "\n").utf8)
+        return write(connection, bytes, bytes.count) == bytes.count
+    }
+
+    static func everythingSaid(inAnswerTo text: String, at path: String) -> String? {
+        guard let connection = connect(to: path) else { return nil }
+        defer { close(connection) }
+        let bytes = Array(text.utf8)
+        guard write(connection, bytes, bytes.count) == bytes.count else { return nil }
+        shutdown(connection, SHUT_WR)
+        var patience = timeval(tv_sec: 3, tv_usec: 0)
+        setsockopt(connection, SOL_SOCKET, SO_RCVTIMEO, &patience, socklen_t(MemoryLayout<timeval>.size))
+        var said = Data()
+        var buffer = [UInt8](repeating: 0, count: 4096)
+        while case let count = read(connection, &buffer, buffer.count), count > 0 {
+            said.append(buffer, count: count)
+        }
+        return String(decoding: said, as: UTF8.self)
+    }
+
     private static func connect(to path: String) -> Int32? {
         let descriptor = socket(AF_UNIX, SOCK_STREAM, 0)
         guard descriptor >= 0 else { return nil }

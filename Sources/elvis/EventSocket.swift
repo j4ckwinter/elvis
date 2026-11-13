@@ -103,8 +103,6 @@ enum EventSocket {
                 }
                 var timeout = timeval(tv_sec: 1, tv_usec: 0)
                 setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size))
-                var on: Int32 = 1
-                setsockopt(client, SOL_SOCKET, SO_NOSIGPIPE, &on, socklen_t(MemoryLayout<Int32>.size))
                 var data = Data()
                 var buffer = [UInt8](repeating: 0, count: 1024)
                 while data.count < 8192 {
@@ -112,8 +110,11 @@ enum EventSocket {
                     if count <= 0 { break }
                     data.append(buffer, count: count)
                 }
+                var hasAnswered = false
                 for line in data.split(separator: 0x0A) {
                     if line.elementsEqual(question) {
+                        if hasAnswered { continue }
+                        hasAnswered = true
                         let answer = Array(DispatchQueue.main.sync(execute: report).utf8)
                         _ = write(client, answer, answer.count)
                     } else if let event = WorkEvent.decode(line: Data(line)) {

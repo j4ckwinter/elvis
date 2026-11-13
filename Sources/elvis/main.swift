@@ -56,7 +56,7 @@ let usage = """
     elvis shell-init <zsh|bash>  print shell integration for your own test runs, commits, and pushes
     elvis hook            (used by the Claude Code plugin) read a hook payload on stdin
     elvis ran <status> <command>  (used by shell integration)
-    elvis sheets [dir]    render pose sheets as PNGs
+    elvis sheets [dir]    render pose sheets as PNGs and the README film as GIFs
     """
 
 switch arguments.first {
@@ -130,7 +130,7 @@ case "demo":
 case "status":
     guard EventSocket.isSomeoneListening else { fail("Elvis isn't running. Try: elvis start") }
     guard let report = EventSocket.ask(), !report.isEmpty else {
-        fail("the running Elvis did not answer. He may be older than this build. Try: elvis restart")
+        fail("the running Elvis did not answer. He may be busy. If he is older than this build, elvis restart swaps him")
     }
     print(report)
 

@@ -211,6 +211,7 @@ enum ElvisApp {
             print("Elvis is already here.")
             exit(0)
         }
+        signal(SIGPIPE, SIG_IGN)
         if detached {
             setsid()
             signal(SIGHUP, SIG_IGN)

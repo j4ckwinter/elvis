@@ -39,6 +39,23 @@ import Testing
         #expect(try elvis.run("status").output.contains("\nLast heard from Claude Code "))
     }
 
+    @Test func anAskerWhoHangsUpBeforeTheAnswerDoesHimNoHarm() throws {
+        let app = try elvis.startApp()
+        try #require(eventually { elvis.isListening })
+        for _ in 0..<5 { #expect(UnixSocket.sayAndHangUp("status?", at: elvis.socket)) }
+        let status = try elvis.run("status")
+        #expect(status.status == 0)
+        #expect(status.output.hasPrefix("Elvis "))
+        #expect(app.isRunning)
+    }
+
+    @Test func oneConnectionGetsOneAnswerHoweverOftenItAsks() throws {
+        try elvis.startApp()
+        try #require(eventually { elvis.isListening })
+        let answers = try #require(UnixSocket.everythingSaid(inAnswerTo: String(repeating: "status?\n", count: 400), at: elvis.socket))
+        #expect(answers.components(separatedBy: "Elvis ").count == 2)
+    }
+
     @Test func saysSoWhenHeIsNotRunning() throws {
         let status = try elvis.run("status")
         #expect(status.status == 2)
