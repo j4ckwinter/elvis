@@ -38,8 +38,8 @@ public struct Ball: Equatable, Sendable {
         x += vx * dt
         y += vy * dt
         spin += vx * dt / 3
-        if x < 5 || x > Yard.width - 5 {
-            x = min(Yard.width - 5, max(5, x))
+        if !Yard.ballRoom.contains(x) {
+            x = min(Yard.ballRoom.upperBound, max(Yard.ballRoom.lowerBound, x))
             vx *= -0.5
         }
         if y <= 0 {

@@ -74,6 +74,42 @@ import Testing
         #expect(offTheLeft.dogX == Yard.leftEdge)
     }
 
+    static func paintsPastTheYard(_ frame: Frame) throws -> Bool {
+        let unit = 2.0, beyond = 40
+        let width = Int(Yard.width * unit) + 2 * beyond, height = Int((Yard.height + Painter.groundMargin) * unit)
+        let ctx = try #require(CGContext(
+            data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        ctx.translateBy(x: CGFloat(beyond), y: 0)
+        var dog = frame
+        dog.particles = []
+        Painter.draw(dog, in: ctx, unit: unit)
+        let pixels = try #require(ctx.data).assumingMemoryBound(to: UInt8.self)
+        let outside = Array(0..<beyond) + Array((width - beyond)..<width)
+        for row in 0..<height {
+            for column in outside where pixels[row * ctx.bytesPerRow + column * 4 + 3] > 0 { return true }
+        }
+        return false
+    }
+
+    @Test(arguments: [UInt64](0..<12))
+    func keepsAllOfHimselfInsideTheYardWhileFetchingBallsThatRolledToTheWall(seed: UInt64) throws {
+        var brain = Brain(seed: seed)
+        var stage = Stage(seed: seed)
+        brain.handle(WorkEvent(.taskStarted, session: "s"))
+        let dt = 1.0 / 30
+        for tick in 0..<Int(240 / dt) {
+            if tick % Int(20 / dt) == 0 { brain.handle(WorkEvent(.testsPassed, session: "s")) }
+            brain.tick(dt)
+            _ = brain.drainCues()
+            let frame = stage.advance(brain.moment, dt: dt)
+            let patch = Painter.bounds(of: frame)
+            guard patch.minX < 0 || patch.maxX > Yard.width else { continue }
+            #expect(try !Self.paintsPastTheYard(frame), "\(frame.action) at x \(frame.x)")
+            if try Self.paintsPastTheYard(frame) { return }
+        }
+    }
+
     @Test func carryingHimSwingsHisBodyAndKeepsItInsideThePaintedPatch() throws {
         var brain = Brain(seed: 6)
         var stage = Stage(seed: 6)

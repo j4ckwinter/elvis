@@ -71,8 +71,7 @@ extension Brain {
             case 7: return [Step(.chaseTail, 2.6), Step(.dizzy, 1.6)]
             case 8:
                 if let ball = world.ball, ball.state == .resting {
-                    let side = world.x <= ball.x ? -1.0 : 1.0
-                    return [Step(.go(to: ball.x + side * 14, gait: .trot)), Step(.nudgeBall, 0.7), Step(.wagAtYou, 2.4)]
+                    return [Step(.go(to: spot(beside: ball), gait: .trot)), Step(.nudgeBall, 0.7), Step(.wagAtYou, 2.4)]
                 }
                 return [Step(.stretch, 2.2)]
             case 9: return [Step(.go(to: spot(within: 40), gait: .walk)), Step(.sniffSpot, 1.6)]

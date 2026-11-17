@@ -166,10 +166,9 @@ public struct Brain: Sendable {
             if step(toward: target, speed: gait.speed, dt: dt) { advance() }
         case .chaseBall:
             guard let ball = world.ball else { advance(); break }
-            let side = world.x <= ball.x ? -1.0 : 1.0
-            let arrived = step(toward: ball.x + side * 14, speed: Gait.run.speed, dt: dt)
+            let arrived = step(toward: spot(beside: ball), speed: Gait.run.speed, dt: dt)
             if arrived, ball.state == .resting {
-                world.facing = -side
+                face(ball)
                 advance()
             } else if elapsed > duration {
                 advance()
@@ -297,7 +296,7 @@ public struct Brain: Sendable {
         if celebrate { steps.append(Step(.spin, 1.0)) }
         steps.append(Step(.watchBall, 0.6))
         if Double.random(in: 0...1, using: &rng) < 0.25 {
-            let past = goLeft ? max(Yard.leftEdge - 8, landing - 30) : min(Yard.rightEdge + 8, landing + 30)
+            let past = goLeft ? max(Yard.leftEdge, landing - 30) : min(Yard.rightEdge, landing + 30)
             steps += [Step(.go(to: past, gait: .run)), Step(.skid, 0.55)]
         }
         steps += [
@@ -310,7 +309,7 @@ public struct Brain: Sendable {
     private mutating func dropBallIfCarried() {
         guard var ball = world.ball, ball.state == .carried else { return }
         ball.state = .resting
-        ball.x = min(Yard.width - 6, max(6, world.x + world.facing * 14))
+        ball.x = min(Yard.ballRoom.upperBound, max(Yard.ballRoom.lowerBound, world.x + world.facing * Yard.mouthReach))
         ball.y = 0
         ball.vx = 0
         ball.vy = 0
@@ -322,7 +321,7 @@ public struct Brain: Sendable {
         guard var ball = world.ball else { return }
         switch ball.state {
         case .carried:
-            ball.x = world.x + world.facing * 14
+            ball.x = world.x + world.facing * Yard.mouthReach
             ball.y = 0
         case .resting:
             ball.restedFor += dt
@@ -341,6 +340,15 @@ public struct Brain: Sendable {
         case .go, .chaseBall: return true
         default: return false
         }
+    }
+
+    func spot(beside ball: Ball) -> Double {
+        let near = ball.x + (world.x <= ball.x ? -1 : 1) * Yard.mouthReach
+        return (Yard.leftEdge...Yard.rightEdge).contains(near) ? near : 2 * ball.x - near
+    }
+
+    private mutating func face(_ ball: Ball) {
+        world.facing = ball.x >= world.x ? 1 : -1
     }
 
     private mutating func step(toward target: Double, speed: Double, dt: Double) -> Bool {
@@ -376,6 +384,7 @@ public struct Brain: Sendable {
             world.mud *= 0.4
         case .nudgeBall:
             if var ball = world.ball, ball.state == .resting {
+                face(ball)
                 ball.state = .flying
                 ball.vx = world.facing * 26
                 ball.vy = 34

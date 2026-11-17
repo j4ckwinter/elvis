@@ -247,6 +247,26 @@ import Testing
         #expect(brain.action == .wagAtYou, "a second pass straight away is a wag, not another fetch")
     }
 
+    @Test func picksUpABallThatRolledToTheWallFromWhereItLies() {
+        var grabsAtTheWall = 0
+        for seed in UInt64(0)..<12 {
+            var brain = working(seed: seed)
+            var serial = brain.actionSerial
+            for tick in 0..<(240 * 30) {
+                if tick % (20 * 30) == 0 { brain.handle(WorkEvent(.testsPassed, session: "s")) }
+                let lying = brain.world.ball
+                brain.tick(1.0 / 30)
+                guard brain.actionSerial != serial else { continue }
+                serial = brain.actionSerial
+                guard brain.action == .grabBall, let lying else { continue }
+                let mouth = brain.world.x + brain.world.facing * Yard.mouthReach
+                #expect(abs(lying.x - mouth) < 1, "seed \(seed): ball at \(lying.x), mouth at \(mouth)")
+                if lying.x < Yard.leftEdge || lying.x > Yard.rightEdge { grabsAtTheWall += 1 }
+            }
+        }
+        #expect(grabsAtTheWall > 0)
+    }
+
     @Test func goingFromRedToGreenEarnsAYip() {
         var brain = working()
         brain.handle(WorkEvent(.testsFailed, session: "s"))
