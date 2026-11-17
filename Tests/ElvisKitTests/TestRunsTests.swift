@@ -127,6 +127,10 @@ import Testing
         #expect(TestRuns.verdict(command: inside, exitStatus: 1, output: "service \"app\" is not running") == nil)
         #expect(TestRuns.verdict(command: inside, exitStatus: 1, output: nil) == nil, "your own shell passes no output, so there is no telling")
         #expect(TestRuns.verdict(command: "CI=1 docker-compose run --rm web npm test", exitStatus: 1, output: "Cannot connect to the Docker daemon") == nil)
+        let daemonDown = "failed to connect to the docker API at unix:///var/run/docker.sock; check if the path is correct and if the daemon is running: dial unix /var/run/docker.sock: connect: no such file or directory"
+        #expect(TestRuns.verdict(command: "docker compose exec -T app python -m unittest", exitStatus: 1, output: daemonDown) == nil)
+        #expect(TestRuns.verdict(command: "docker compose exec -T app python -m pytest", exitStatus: 1, output: "/usr/local/bin/python: No module named pytest") == nil)
+        #expect(TestRuns.verdict(command: "docker compose run --rm -T app python -m unittest", exitStatus: 1, output: "Ran 2 tests in 0.000s\n\nFAILED (failures=1)") == .failed)
         #expect(TestRuns.verdict(command: "cd api && docker compose exec app pytest", exitStatus: 1, output: "service \"app\" is not running") == nil)
         #expect(TestRuns.verdict(command: "cd api && docker compose exec app pytest", exitStatus: 1, output: "===== 1 failed in 0.2s =====") == .failed)
         #expect(TestRuns.verdict(command: "cd api && docker compose exec app pytest", exitStatus: 0, output: nil) == .passed)
