@@ -9,13 +9,21 @@ final class YardView: NSView {
     var onPress: () -> Void = {}
     var onDrag: () -> Void = {}
     var onRelease: () -> Void = {}
+    var onMove: () -> Void = {}
 
     override var isOpaque: Bool { false }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseMoved, .activeAlways, .inVisibleRect], owner: self))
+    }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     override func mouseDown(with event: NSEvent) { onPress() }
     override func mouseDragged(with event: NSEvent) { onDrag() }
     override func mouseUp(with event: NSEvent) { onRelease() }
+    override func mouseMoved(with event: NSEvent) { onMove() }
 
     func pointerInYard() -> (x: Double, y: Double)? {
         guard let frame = window?.frame else { return nil }

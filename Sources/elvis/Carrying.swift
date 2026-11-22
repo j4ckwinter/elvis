@@ -23,6 +23,8 @@ final class Carrying {
         view.onPress = { [weak self] in self?.press() }
         view.onDrag = { [weak self] in self?.drag() }
         view.onRelease = { [weak self] in self?.release() }
+        view.onMove = { [weak self] in self?.catchClicksOnlyOnElvis() }
+        NSEvent.addGlobalMonitorForEvents(matching: .mouseMoved) { [weak self] _ in self?.catchClicksOnlyOnElvis() }
     }
 
     func tick() {
