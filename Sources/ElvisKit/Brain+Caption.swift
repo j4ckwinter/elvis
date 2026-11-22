@@ -39,6 +39,7 @@ extension Brain {
         case .confused: return "not sure what just happened"
         case .buryBone: return "burying that one for later"
         case .bark: return "telling the whole street"
+        case .offerPaw: return "offering a paw for you to look over"
         case .watchBall, .chaseBall, .skid, .grabBall: return "ball ball ball"
         case .dropBall, .proudSit: return "brought you this"
         case .flop: return "done in, and delighted"

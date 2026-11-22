@@ -311,6 +311,21 @@ import Testing
         #expect(brain.drainCues().isEmpty)
     }
 
+    @Test func offersHisPawWhenAPullRequestIsOpened() {
+        var brain = working()
+        brain.handle(WorkEvent(.pullRequestOpened, session: "s"))
+        #expect(brain.action == .offerPaw)
+        #expect(brain.mode == .working)
+        #expect(brain.drainCues().isEmpty)
+    }
+
+    @Test func keepsHisPawDownWhileHeWaitsAtTheDoor() {
+        var brain = working()
+        brain.handle(WorkEvent(.needsYou, session: "s", subject: "Bash:1"))
+        brain.handle(WorkEvent(.pullRequestOpened, session: "other"))
+        #expect(!run(&brain, for: 20).contains(.offerPaw))
+    }
+
     @Test func yourOwnCommitsAndPushesNeedNoSession() {
         var brain = Brain(seed: 5)
         run(&brain, for: 5)

@@ -75,6 +75,7 @@ enum Sheets {
             Cell(label: "buryBone, digging", action: .buryBone, at: 1.2, length: 3.4),
             Cell(label: "buryBone, covering", action: .buryBone, at: 2.8, length: 3.4),
             Cell(label: "bark", action: .bark, at: 0.34, length: 1.2),
+            Cell(label: "offerPaw", action: .offerPaw, at: 1.6, length: 3.2),
             Cell(label: "listen", action: .listen, at: 0.5, length: 1.8),
             Cell(label: "listen, other ear", action: .listen, at: 1.5, length: 1.8),
         ]

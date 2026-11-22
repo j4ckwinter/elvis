@@ -63,6 +63,15 @@ import Testing
         #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"npm test && git commit -m x"},"tool_response":{"stdout":"ok","stderr":"","gitOperation":{"commit":{"sha":"2e3c8c6","kind":"committed","branch":"main"}}}}"#)?.kind == .testsPassed, "the tests are the bigger news")
     }
 
+    @Test func anOpenedPullRequestIsReportedOnClaudeCodesWordAndWithoutItsAddress() throws {
+        let opened = try #require(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"gh pr create --fill"},"tool_response":{"stdout":"https://github.com/hidden/repo/pull/7","stderr":"","gitOperation":{"pr":{"number":7,"url":"https://github.com/hidden/repo/pull/7","action":"created"}}}}"#))
+        #expect(opened.kind == .pullRequestOpened)
+        #expect(!String(decoding: opened.encodedLine(), as: UTF8.self).contains("hidden"))
+        #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"git push -u origin topic && gh pr create --fill"},"tool_response":{"stdout":"","stderr":"","gitOperation":{"push":{"branch":"topic"},"pr":{"number":8,"url":"https://github.com/o/r/pull/8","action":"created"}}}}"#)?.kind == .pullRequestOpened, "the pull request is the bigger news")
+        #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"gh pr merge 7"},"tool_response":{"stdout":"","stderr":"","gitOperation":{"pr":{"number":7,"url":"https://github.com/o/r/pull/7","action":"merged"}}}}"#)?.kind == .toolFinished)
+        #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"gh pr create --fill"},"tool_response":{"stdout":"https://github.com/o/r/pull/7","stderr":""}}"#)?.kind == .toolFinished)
+    }
+
     @Test func theCommandTextAloneNeverProvesACommitOrPushToClaudeCode() {
         #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"git push"},"tool_response":{"stdout":"Everything up-to-date","stderr":""}}"#)?.kind == .toolFinished)
         #expect(event(#"{"hook_event_name":"PostToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"git push -q"},"tool_response":{"stdout":"","stderr":""}}"#)?.kind == .toolFinished)

@@ -91,6 +91,21 @@ extension Choreography {
         return p
     }
 
+    static func offerPaw(elapsed t: Double, length d: Double) -> Pose {
+        var p = Pose.sit
+        faceYou(&p)
+        let k = swell(t, d, attack: 0.35, release: 0.4)
+        p.paws[0] = p.paws[0].mixed(CGPoint(x: 13.5, y: 8 + sin(t * 3.2) * 0.6), k)
+        p.shoulder.y += 0.6 * k
+        p.head.y += 0.8 * k
+        p.tilt = 0.14 * k
+        p.eyes = 1.15
+        p.brow = 0.6
+        p.earLift = 0.3 * k
+        p.tail = -0.05 + 0.55 * abs(sin(t * 7))
+        return p
+    }
+
     static func flop(elapsed t: Double, length d: Double) -> Pose {
         let down = ease(t / 0.55)
         var p = Pose.stand.mixed(with: .sploot, down)

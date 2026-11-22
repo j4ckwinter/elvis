@@ -14,6 +14,7 @@ public struct WorkEvent: Codable, Equatable, Sendable {
         case testsFailed = "tests-failed"
         case committed
         case pushed
+        case pullRequestOpened = "pull-request-opened"
         case taskFinished = "task-finished"
         case taskStumbled = "task-stumbled"
         case sessionIdle = "session-idle"

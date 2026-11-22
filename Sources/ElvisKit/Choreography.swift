@@ -52,6 +52,7 @@ public enum Choreography {
         case .spin: return spin(elapsed: elapsed, length: length)
         case .confused: return confused(elapsed: elapsed)
         case .buryBone: return buryBone(elapsed: elapsed)
+        case .offerPaw: return offerPaw(elapsed: elapsed, length: length)
         case .bark: return bark(elapsed: elapsed)
         case .flop: return flop(elapsed: elapsed, length: length)
         case .relief: return relief(elapsed: elapsed, length: length)

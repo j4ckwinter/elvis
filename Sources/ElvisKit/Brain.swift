@@ -121,6 +121,9 @@ public struct Brain: Sendable {
             let barkedLately = now - lastBark < tuning.barkEvery
             if !barkedLately { lastBark = now }
             react([barkedLately ? Step(.wagAtYou, 2.0) : Step(.bark, 1.2)], append: reacting)
+        case .pullRequestOpened:
+            guard after != .waiting else { break }
+            react([Step(.offerPaw, 3.2)], append: reacting)
         case .throwBall:
             if after != .waiting, !isFetching { startFetch(celebrate: false) }
         case .sessionStarted:

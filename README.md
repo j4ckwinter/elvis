@@ -33,7 +33,7 @@ the paw print in the menu bar says what he thinks he’s doing. it counts the Cl
 
 `elvis status` asks him the same thing from a terminal, and adds his version and how long ago he last heard from Claude Code. it’s the quick way to tell whether he’s hearing your session.
 
-for the tour without Claude, run `elvis demo`. it walks through his reactions in about 85 seconds. each [release](https://github.com/j4ckwinter/elvis/releases) has the binary as a zip for that. macOS quarantines a browser download, so clear it first with `xattr -d com.apple.quarantine elvis`.
+for the tour without Claude, run `elvis demo`. it walks through his reactions in about 90 seconds. each [release](https://github.com/j4ckwinter/elvis/releases) has the binary as a zip for that. macOS quarantines a browser download, so clear it first with `xattr -d com.apple.quarantine elvis`.
 
 ## what he does
 
@@ -50,6 +50,7 @@ for the tour without Claude, run `elvis demo`. it walks through his reactions in
 | tests pass | chases a ball, trots it back, and sits there looking proud. one fetch per 45 seconds; otherwise a wag. a pass straight after a failure gets a spin and a yip first. |
 | Claude commits | buries a bone where it will be safe. one bone per 20 seconds. |
 | Claude pushes | barks twice to tell the whole street. one bark a minute; otherwise a wag. |
+| Claude opens a pull request | sits up and offers you his paw, so you’ll look it over. |
 | Claude needs your approval or an answer | goes to the door, sits, and stares at you. he tilts his head, paws the door, and after a couple of minutes lies down with his chin on the floor. he stays silent while he waits. |
 | you answer | a relieved hop, then back to work. |
 | a run of two minutes or more ends | flops flat out, tongue out, tail thumping. |
@@ -138,7 +139,7 @@ ELVIS_HOME="$(mktemp -d)" ELVIS_FILM=/some/dir .build/release/elvis run   # film
 - when a chain such as `npm run build && npm test` fails, he blames the tests only if the output reports failing tests. after nothing but a `cd`, any failure is the runner’s, unless the output shows the `cd` itself failed. your own shell passes him no output, so there a failed chain goes unremarked.
 - a test run inside a compose service, as in `docker compose exec app pytest`, is blamed for a failure only when the output reports failing tests, because compose itself fails when the service isn’t running. a detached run, an `--entrypoint`, or a flag he doesn’t know leaves him out of it. in your own shell a failing run there goes unremarked.
 - the menu counts sessions and subagents but can’t name them. project names and paths stay inside the hook.
-- only a commit and a push count as saving and sending work. a merge, a rebase, or `gh pr create` goes unremarked.
+- only a commit, a push, and Claude opening a pull request count as saving and sending work. a merge or a rebase goes unremarked, and so does a pull request you open in your own shell.
 - he hears about Claude’s commits and pushes from Claude Code itself, which marks the result of a command that committed or pushed. seen in Claude Code 2.1.322, 2.1.323 and 2.1.330. a version that doesn’t mark them leaves him unaware, and `make claude-check` tells you whether yours does.
 - in your own shell he sees the command and its exit status but no output, so a `git push` with nothing to send still gets a bark.
 - the shell integration covers zsh and bash. fish isn’t supported.

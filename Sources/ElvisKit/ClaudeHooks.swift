@@ -74,6 +74,7 @@ public enum ClaudeHooks {
 
     private static func gitNews(reportedIn response: [String: Any]?) -> WorkEvent.Kind? {
         guard let git = response?["gitOperation"] as? [String: Any] else { return nil }
+        if (git["pr"] as? [String: Any])?["action"] as? String == "created" { return .pullRequestOpened }
         if git["push"] != nil { return .pushed }
         return git["commit"] != nil ? .committed : nil
     }
