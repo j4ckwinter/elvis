@@ -139,7 +139,7 @@ ELVIS_HOME="$(mktemp -d)" ELVIS_FILM=/some/dir .build/release/elvis run   # film
 - a test run inside a compose service, as in `docker compose exec app pytest`, is blamed for a failure only when the output reports failing tests, because compose itself fails when the service isn’t running. a detached run, an `--entrypoint`, or a flag he doesn’t know leaves him out of it. in your own shell a failing run there goes unremarked.
 - the menu counts sessions and subagents but can’t name them. project names and paths stay inside the hook.
 - only a commit and a push count as saving and sending work. a merge, a rebase, or `gh pr create` goes unremarked.
-- he hears about Claude’s commits and pushes from Claude Code itself, which marks the result of a command that committed or pushed. seen in Claude Code 2.1.322 and 2.1.323. a version that doesn’t mark them leaves him unaware, and `make claude-check` tells you whether yours does.
+- he hears about Claude’s commits and pushes from Claude Code itself, which marks the result of a command that committed or pushed. seen in Claude Code 2.1.322, 2.1.323 and 2.1.330. a version that doesn’t mark them leaves him unaware, and `make claude-check` tells you whether yours does.
 - in your own shell he sees the command and its exit status but no output, so a `git push` with nothing to send still gets a bark.
 - the shell integration covers zsh and bash. fish isn’t supported.
 - test detection is a list of known runners. an unusual runner goes unnoticed until it’s added to `TestRuns.swift`.
