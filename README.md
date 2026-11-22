@@ -132,7 +132,7 @@ ELVIS_HOME="$(mktemp -d)" ELVIS_FILM=/some/dir .build/release/elvis run   # film
 <summary>known limits</summary>
 
 - in a full-screen Space he stays where the top of the Dock would be. checked by eye on 12 November 2026.
-- he starts on the primary display. dragging him is the only way to move him to another one.
+- he starts on the primary display. dragging him is the only way to move him to another one. once he’s there, the menu’s corners are that display’s corners.
 - with “Displays have separate Spaces” on, he may disappear briefly while he’s carried across two displays. not checked.
 - Claude Code reports nothing at the moment you approve a command, so he stays by the door until that command finishes. this is also why he never whines there.
 - when a chain such as `npm run build && npm test` fails, he blames the tests only if the output reports failing tests. after nothing but a `cd`, any failure is the runner’s, unless the output shows the `cd` itself failed. your own shell passes him no output, so there a failed chain goes unremarked.

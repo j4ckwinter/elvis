@@ -1,6 +1,10 @@
 import CoreGraphics
 
 public enum Placement {
+    public static func cornerScreen(remembered: String?, among screens: [String]) -> Int {
+        remembered.flatMap(screens.firstIndex(of:)) ?? 0
+    }
+
     public static func settle(window: CGRect, dogX: Double, unit: Double, within screen: CGRect) -> (origin: CGPoint, dogX: Double) {
         let dogOnScreen = window.minX + dogX * unit
         let origin = CGPoint(

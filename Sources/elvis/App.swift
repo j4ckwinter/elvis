@@ -70,16 +70,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func placeWindow() {
-        guard let window, let home = NSScreen.screens.first else { return }
+        let screens = NSScreen.screens
+        guard let window, !screens.isEmpty else { return }
         let size = NSSize(width: Yard.width * YardView.unit, height: (Yard.height + Painter.groundMargin) * YardView.unit)
         if let spot = keepsakes.spot {
             let wanted = NSRect(origin: NSPoint(x: spot.x, y: spot.y), size: size)
-            if let screen = NSScreen.screens.first(where: { $0.frame.intersects(wanted) }) {
+            if let screen = screens.first(where: { $0.frame.intersects(wanted) }) {
                 let settled = Placement.settle(window: wanted, dogX: brain.world.x, unit: YardView.unit, within: screen.floor)
                 window.setFrame(NSRect(origin: settled.origin, size: size), display: true)
                 return
             }
         }
+        let home = screens[Placement.cornerScreen(remembered: keepsakes.cornerScreen, among: screens.map { $0.identity ?? "" })]
         let ground = home.floor
         let x = keepsakes.leftCorner ? ground.minX + 8 : ground.maxX - size.width - 8
         window.setFrame(NSRect(origin: NSPoint(x: x, y: ground.minY), size: size), display: true)
@@ -199,6 +201,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func switchCorner() {
         if keepsakes.spot == nil { keepsakes.leftCorner.toggle() }
+        keepsakes.cornerScreen = window?.screen?.identity
         keepsakes.spot = nil
         keepsakes.save()
         placeWindow()

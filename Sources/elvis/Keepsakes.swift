@@ -3,6 +3,7 @@ import Foundation
 struct Keepsakes: Codable {
     var sounds = true
     var leftCorner = false
+    var cornerScreen: String?
     var mud = 0.0
     var day = ""
     var spot: Spot?
